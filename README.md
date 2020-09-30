@@ -9,7 +9,7 @@ cooperative multi-task manager for Arduino
 
 - execute task once after some secods
 - execute repeted task with interval (optionally with N-times limit)
-- execute repeted task with framerat (optionally with N-times limit)e
+- execute repeted task with framerat (optionally with N-times limit)
 
 If you want to handle more complex tasks, please see [SceneManager](https://github.com/hideakitai/SceneManager).
 
