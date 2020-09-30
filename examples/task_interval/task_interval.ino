@@ -11,7 +11,7 @@ void setup()
         Serial.println(millis());
     });
 
-    // task framerate is 500 and 10 times only
+    // task interval is 500[ms] and 10 times only
     Tasks.interval(500, 10, []{
         Serial.print("interval limited task: now = ");
         Serial.println(millis());
