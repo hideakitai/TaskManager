@@ -2,26 +2,16 @@
 #ifndef ARDUINO_TASK_MANAGER_H
 #define ARDUINO_TASK_MANAGER_H
 
-#if defined(ARDUINO_ARCH_AVR)\
- || defined(ARDUINO_ARCH_MEGAAVR)\
- || defined(ARDUINO_ARCH_SAM)\
- || defined(ARDUINO_ARCH_SAMD)\
- || defined(ARDUINO_spresense_ast)
-    #define ARDUINO_TASK_MANAGER_DISABLE_STL
-#endif
-
 #include <Arduino.h>
 
-#ifdef ARDUINO_TASK_MANAGER_DISABLE_STL
-    #include "TaskManager/util/ArxContainer/ArxContainer.h"
-    #include "TaskManager/util/ArxSmartPtr/ArxSmartPtr.h"
-#else
-    #include "TaskManager/util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
+#include "TaskManager/util/ArxContainer/ArxContainer.h"
+#include "TaskManager/util/ArxSmartPtr/ArxSmartPtr.h"
+#include "TaskManager/util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
+
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
     #include <algorithm>
     #include <iterator>
-    #include <vector>
-    #include <memory>
-#endif // ARDUINO_TASK_MANAGER_DISABLE_STL
+#endif
 
 #include "TaskManager/util/PollingTimer/IntervalCounter.h"
 #include "TaskManager/util/PollingTimer/FrameRateCounter.h"
@@ -31,15 +21,15 @@
 namespace arduino {
 namespace task {
 
-#ifdef ARDUINO_TASK_MANAGER_DISABLE_STL
-    template <typename T> using Vec = arx::vector<T>;
-    template <typename T> using Ref = arx::shared_ptr<T>;
-    using namespace arx;
-#else
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
     template <typename T> using Vec = std::vector<T>;
     template <typename T> using Ref = std::shared_ptr<T>;
     using namespace std;
-#endif // ARDUINO_TASK_MANAGER_DISABLE_STL
+#else
+    template <typename T> using Vec = arx::vector<T>;
+    template <typename T> using Ref = std::shared_ptr<T>;
+    using namespace arx;
+#endif
 
 using TaskRef = Ref<IntervalCounter>;
 using Func = std::function<void(void)>;
@@ -62,7 +52,7 @@ public:
 
     TaskRef once(const uint32_t after_ms, const Func& task)
     {
-        auto e = make_shared<OneShotTimer>((double)after_ms * 0.001, task);
+        auto e = std::make_shared<OneShotTimer>((double)after_ms * 0.001, task);
         tasks.emplace_back(e);
         e->start();
         return e;
@@ -70,7 +60,7 @@ public:
 
     TaskRef interval(const uint32_t interval_ms, const uint32_t counts, const Func& task)
     {
-        auto e = make_shared<IntervalCounter>((double)interval_ms * 0.001);
+        auto e = std::make_shared<IntervalCounter>((double)interval_ms * 0.001);
         tasks.emplace_back(e);
         e->addEvent(task);
         e->startForCount(counts);
@@ -84,7 +74,7 @@ public:
 
     TaskRef framerate(const float fps, const uint32_t frame, const Func& task)
     {
-        auto e = make_shared<FrameRateCounter>(fps);
+        auto e = std::make_shared<FrameRateCounter>(fps);
         tasks.emplace_back(e);
         e->addEvent(task);
         e->startForCount(frame);
@@ -101,21 +91,21 @@ public:
         for (auto& e : tasks) e->update();
 
         // remove if event has done
-#ifdef ARDUINO_TASK_MANAGER_DISABLE_STL
-        auto it = tasks.begin();
-        while (it != tasks.end())
-        {
-            if ((*it)->hasFinished()) it = tasks.erase(it);
-            else it++;
-        }
-#else
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L // Have libstdc++11
         auto results = std::remove_if(tasks.begin(), tasks.end(),
             [&](const TaskRef& e) {
                 return e->hasFinished();
             }
         );
         tasks.erase(results, tasks.end());
-#endif // ARDUINO_TASK_MANAGER_DISABLE_STL
+#else
+        auto it = tasks.begin();
+        while (it != tasks.end())
+        {
+            if ((*it)->hasFinished()) it = tasks.erase(it);
+            else it++;
+        }
+#endif
     }
 
     size_t size() const { return tasks.size(); }
