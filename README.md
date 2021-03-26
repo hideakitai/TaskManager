@@ -103,7 +103,7 @@ TaskRef operator[] (const String& name) const;
 
 ## Embedded Libraries
 
-- [PollingTimer v0.2.3](https://github.com/hideakitai/PollingTimer)
+- [PollingTimer v0.2.4](https://github.com/hideakitai/PollingTimer)
 - [ArxContainer v0.3.10](https://github.com/hideakitai/ArxContainer)
 - [ArxSmartPtr v0.2.1](https://github.com/hideakitai/ArxSmartPtr)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
