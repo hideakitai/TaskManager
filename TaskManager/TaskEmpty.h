@@ -7,14 +7,15 @@
 namespace arduino {
 namespace task {
 
-class TaskEmpty : public Base {
-public:
-    TaskEmpty(const String& name) : Base(name) {}
-    virtual ~TaskEmpty() {}
-    virtual void update() override {}
-};
+    class TaskEmpty : public Base {
+    public:
+        TaskEmpty(const String& name)
+        : Base(name) {}
+        virtual ~TaskEmpty() {}
+        virtual void update() override {}
+    };
 
-} // namespace task
-} // namespace arduino
+}  // namespace task
+}  // namespace arduino
 
-#endif // ARDUINO_TASK_MANAGER_TASK_EMPTY_H
+#endif  // ARDUINO_TASK_MANAGER_TASK_EMPTY_H

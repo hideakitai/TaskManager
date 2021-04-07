@@ -1,12 +1,12 @@
 #pragma once
-#ifndef BLINK_H // change depending on your class
-#define BLINK_H // change depending on your class
+#ifndef BLINK_H  // change depending on your class
+#define BLINK_H  // change depending on your class
 
 #include <Arduino.h>
 #include <TaskManager.h>
 
 #ifndef LED_BUILTIN
-#define LED_BUILTIN 13 // <- change to your own led pin
+#define LED_BUILTIN 13  // <- change to your own led pin
 #endif
 
 class Blink : public Task::Base {
@@ -15,8 +15,7 @@ class Blink : public Task::Base {
 public:
     Blink(const String& name)
     : Task::Base(name)
-    , b(false)
-    {
+    , b(false) {
         pinMode(LED_BUILTIN, OUTPUT);
         digitalWrite(LED_BUILTIN, LOW);
     }
@@ -29,4 +28,4 @@ public:
     }
 };
 
-#endif // BLINK_H
+#endif  // BLINK_H

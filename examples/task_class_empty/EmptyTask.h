@@ -7,8 +7,7 @@
 class EmptyTask : public Task::Base {
 public:
     EmptyTask(const String& name)
-    : Task::Base(name)
-    {
+    : Task::Base(name) {
     }
 
     virtual ~EmptyTask() {
@@ -34,4 +33,4 @@ public:
     // }
 };
 
-#endif // MY_EMPTY_TASK_H
+#endif  // MY_EMPTY_TASK_H

@@ -5,17 +5,17 @@ void my_task() {
     Serial.println(millis());
 }
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     delay(2000);
 
     // called in every update() and repeat forever (default)
     // start() starts the task without changing previous (default) setting
-    Tasks.add([]{
-        Serial.print("forever task called every update(): now = ");
-        Serial.println(millis());
-    })->start();
+    Tasks.add([] {
+             Serial.print("forever task called every update(): now = ");
+             Serial.println(millis());
+         })
+        ->start();
 
     // task framerate is 1 and repeat forever
     // Tasks.add([]{
@@ -54,7 +54,6 @@ void setup()
     Serial.println(millis());
 }
 
-void loop()
-{
+void loop() {
     Tasks.update();
 }

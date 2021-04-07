@@ -1,14 +1,13 @@
 #pragma once
-#ifndef SPEAK_H // change depending on your class
-#define SPEAK_H // change depending on your class
+#ifndef SPEAK_H  // change depending on your class
+#define SPEAK_H  // change depending on your class
 
 #include <TaskManager.h>
 
 class Speak : public Task::Base {
 public:
     Speak(const String& name)
-    : Base(name)
-    {
+    : Base(name) {
         Serial.begin(115200);
     }
 
@@ -38,4 +37,4 @@ public:
     }
 };
 
-#endif // SPEAK_H
+#endif  // SPEAK_H

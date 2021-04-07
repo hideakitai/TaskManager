@@ -7,8 +7,7 @@
 class SpeakEvent : public Task::Base {
 public:
     SpeakEvent(const String& name)
-    : Task::Base(name)
-    {
+    : Task::Base(name) {
         Serial.print("Task ");
         Serial.print(name);
         Serial.println(" has created");
@@ -56,4 +55,4 @@ public:
     }
 };
 
-#endif // SPEAK_EVENT_H
+#endif  // SPEAK_EVENT_H
