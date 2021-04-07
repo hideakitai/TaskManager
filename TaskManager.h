@@ -429,7 +429,7 @@ namespace task {
                 if ((*it)->getName() == name)
                     it = tasks.erase(it);
                 else
-                    it++;
+                    ++it;
             }
 #endif
         }
