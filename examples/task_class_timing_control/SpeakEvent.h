@@ -48,6 +48,13 @@ public:
     }
 
     // optional (you can remove this method)
+    virtual void idle() override {
+        // Serial.print("Task ");
+        // Serial.print(getName());
+        // Serial.println(" idle()");
+    }
+
+    // optional (you can remove this method)
     virtual void reset() override {
         Serial.print("Task ");
         Serial.print(getName());

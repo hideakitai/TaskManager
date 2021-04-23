@@ -29,6 +29,10 @@ public:
     // }
 
     // optional (you can remove this method)
+    // virtual void idle() override {
+    // }
+
+    // optional (you can remove this method)
     // virtual void reset() override {
     // }
 };

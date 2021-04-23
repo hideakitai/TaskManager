@@ -30,6 +30,7 @@ namespace task {
         virtual void enter() {};
         virtual void update() = 0;
         virtual void exit() {};
+        virtual void idle() {};
         virtual void reset() {};
 
         bool hasEnter() const { return !b_prev_running && isRunning(); }

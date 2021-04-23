@@ -82,6 +82,7 @@ namespace task {
         void update() {
             for (auto& t : tasks) {
                 if (!t->isRunning()) {
+                    t->idle();
                     continue;
                 }
                 if (t->FrameRateCounter::update() || t->hasExit()) {
