@@ -8,11 +8,11 @@ void setup() {
     Serial.println("add tasks");
     Serial.println("start task1");
 
-    Tasks.add<SpeakEvent>("task1")->startFps(1.);
-    Tasks.add<SpeakEvent>("task2")->startInterval(0.5);
+    Tasks.add<SpeakEvent>("task1")->startFps(2);
+    Tasks.add<SpeakEvent>("task2");
 
     // you can also start by:
-    // Tasks.startFps("task1", 1.);       // start all task at once
+    // Tasks.startFps(1.);                // start all task at once
     // Tasks.startInterval("task2", 0.5); // start "task2"
 
     Serial.print("all tasks are ");
@@ -35,7 +35,7 @@ void loop() {
         Serial.println(Tasks.getActiveTaskSize());
 
         Serial.println("start task2");
-        Tasks.start("task2");
+        Tasks.startFps("task2", 2);
     }
 
     if (Tasks.frame("task1") >= 10) {
@@ -48,7 +48,7 @@ void loop() {
         Tasks.stop("task1");
     }
 
-    if (Tasks.frame("task2") >= 15) {
+    if (Tasks.frame("task2") >= 7) {
         Serial.print("all tasks are ");
         Serial.println(Tasks.size());
         Serial.print("active tasks are ");
@@ -58,7 +58,7 @@ void loop() {
         Tasks.stop("task2");
     }
 
-    if (millis() > 16000 && !Tasks.empty()) {
+    if (millis() > 10000 && !Tasks.empty()) {
         Serial.print("all tasks are ");
         Serial.println(Tasks.size());
         Serial.print("active tasks are ");
@@ -75,7 +75,7 @@ void loop() {
         Serial.println(Tasks.getActiveTaskSize());
     }
 
-    if (millis() > 17000) {
+    if (millis() > 11000) {
         Serial.println("end");
         delay(1000);
     }
