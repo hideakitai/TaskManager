@@ -8,7 +8,7 @@ polling-based cooperative multi-task manager for Arduino
 Two kinds of tasks are:
 
 - task callbacks
-- task classes (the collection of `begin()` `enter()` `update()` `exit()` `reset()`)
+- task classes (the collection of `begin()` `enter()` `update()` `exit()` `idle()` `reset()`)
 
 and they can be handled like:
 
@@ -116,6 +116,7 @@ public:
     virtual void enter() override {}  // optional: called once when task has started
     virtual void update() override {} // must be implemented: called every Tasks.update()
     virtual void exit() override {}   // optional: called once after task has stopped
+    virtual void idle() override {}   // optional: called when task isn't running (every loop)
     virtual void reset() override {}  // optional
 };
 ```
