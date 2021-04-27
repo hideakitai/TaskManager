@@ -298,7 +298,7 @@ template <typename TaskType = Base> Ref<TaskType> operator[] (const size_t i) co
 ## Embedded Libraries
 
 - [PollingTimer v0.2.4](https://github.com/hideakitai/PollingTimer)
-- [ArxContainer v0.3.13](https://github.com/hideakitai/ArxContainer)
+- [ArxContainer v0.3.14](https://github.com/hideakitai/ArxContainer)
 - [ArxSmartPtr v0.2.1](https://github.com/hideakitai/ArxSmartPtr)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 
