@@ -448,6 +448,10 @@ namespace task {
             is_auto_erase = b;
         }
 
+        void clear() {
+            tasks.clear();
+        }
+
         bool isAutoErase() const {
             return is_auto_erase;
         }
