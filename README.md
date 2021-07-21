@@ -203,8 +203,8 @@ void reset();
 bool reset(const String& name);
 bool reset(const size_t idx);
 
-void erase(const String& name);
-void erase(const size_t idx);
+bool erase(const String& name);
+bool erase(const size_t idx);
 void setAutoErase(const bool b);
 bool isAutoErase() const;
 bool empty() const;

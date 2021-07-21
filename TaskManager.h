@@ -417,26 +417,31 @@ namespace task {
             return false;
         }
 
-        void erase(const String& name) {
+        bool erase(const String& name) {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
             auto results = std::remove_if(tasks.begin(), tasks.end(),
                 [&](const TaskRef& t) {
                     return (t->getName() == name);
                 });
-            tasks.erase(results, tasks.end());
+            auto it = tasks.erase(results, tasks.end());
+            return it != tasks.end();
 #else
             auto it = tasks.begin();
             while (it != tasks.end()) {
-                if ((*it)->getName() == name)
+                if ((*it)->getName() == name) {
                     it = tasks.erase(it);
-                else
+                    return true;
+                } else
                     ++it;
             }
+            return false;
 #endif
         }
-        void erase(const size_t idx) {
+        bool erase(const size_t idx) {
+            if (idx >= tasks.size()) return false;
             auto it = tasks.begin() + idx;
             tasks.erase(it);
+            return true;
         }
 
         void setAutoErase(const bool b) {
