@@ -15,7 +15,6 @@ namespace task {
 
     protected:
         String name;
-        bool b_prev_running {false};
 
     public:
         Base(const String& name)
@@ -33,25 +32,10 @@ namespace task {
         virtual void idle() {};
         virtual void reset() {};
 
-        bool hasEnter() const { return !b_prev_running && isRunning(); }
-        bool hasExit() const { return b_prev_running && !isRunning(); }
+        bool hasEnter() const { return this->hasStarted(); }
+        bool hasExit() const { return this->hasStopped(); }
 
         const String& getName() const { return name; }
-
-    protected:
-        void callUpdate() {
-            if (hasEnter()) {
-                b_prev_running = true;
-                enter();
-            }
-
-            if (isRunning()) update();
-
-            if (hasExit()) {
-                b_prev_running = false;
-                exit();
-            }
-        }
     };
 
 }  // namespace task
