@@ -7,6 +7,13 @@
 #include "TaskManager/util/ArxContainer/ArxContainer.h"
 #include "TaskManager/util/ArxSmartPtr/ArxSmartPtr.h"
 #include "TaskManager/util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
+#include "TaskManager/util/DebugLog/DebugLog.h"
+
+#ifdef TASKMANAGER_DEBUGLOG_ENABLE
+#include "TaskManager/util/DebugLog/DebugLogEnable.h"
+#else
+#include "TaskManager/util/DebugLog/DebugLogDisable.h"
+#endif
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
 #include <algorithm>
@@ -855,5 +862,7 @@ namespace task {
 
 #define Tasks arduino::task::Manager::get()
 namespace Task = arduino::task;
+
+#include "TaskManager/util/DebugLog/DebugLogRestoreState.h"
 
 #endif  // ARDUINO_TASK_MANAGER_H
