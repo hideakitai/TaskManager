@@ -77,6 +77,7 @@ void loop() {
 
     if (millis() > 11000) {
         Serial.println("end");
-        delay(1000);
+        while (true)
+            ;
     }
 }
