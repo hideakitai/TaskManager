@@ -534,14 +534,14 @@ namespace task {
             return false;
         }
 
-        bool hasFinished(const String& name) const {
+        bool hasStopped(const String& name) const {
             auto t = getTaskByName(name);
-            if (t) return t->hasFinished();
+            if (t) return t->hasStopped();
             return false;
         }
-        bool hasFinished(const size_t idx) const {
+        bool hasStopped(const size_t idx) const {
             auto t = getTaskByIndex(idx);
-            if (t) return t->hasFinished();
+            if (t) return t->hasStopped();
             return false;
         }
 
