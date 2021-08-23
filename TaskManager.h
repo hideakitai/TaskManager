@@ -66,7 +66,7 @@ namespace task {
 
         Ref<TaskEmpty> add(const String& name, const Func& task) {
             Ref<TaskEmpty> t = std::make_shared<TaskEmpty>(name);
-            t->addEvent(task);
+            t->onUpdate(task);
             tasks.emplace_back(t);
             t->begin();
             return t;
@@ -86,15 +86,28 @@ namespace task {
             return t;
         }
 
+    private:
+        void update_task(TaskRef t) {
+            if (t->isRunning()) {
+                if (t->hasEnter()) {
+                    t->enter();
+                }
+                if (t->FrameRateCounter::update()) {
+                    t->update();
+                }
+            } else {
+                if (t->hasExit()) {
+                    t->exit();
+                }
+                t->FrameRateCounter::update();  // update internal state
+                t->idle();
+            }
+        }
+
+    public:
         void update() {
             for (auto& t : tasks) {
-                if (!t->isRunning()) {
-                    t->idle();
-                    continue;
-                }
-                if (t->FrameRateCounter::update() || t->hasExit()) {
-                    t->callUpdate();
-                }
+                update_task(t);
             }
 
             // remove if event has done
@@ -102,13 +115,13 @@ namespace task {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
                 auto results = std::remove_if(tasks.begin(), tasks.end(),
                     [&](const Ref<Base>& t) {
-                        return t->hasFinished();
+                        return t->hasStopped();
                     });
                 tasks.erase(results, tasks.end());
 #else
                 auto it = tasks.begin();
                 while (it != tasks.end()) {
-                    if ((*it)->hasFinished())
+                    if ((*it)->hasStopped())
                         it = tasks.erase(it);
                     else
                         it++;
@@ -321,7 +334,6 @@ namespace task {
             auto t = getTaskByName(name);
             if (t) {
                 t->stop();
-                t->callUpdate();
                 return true;
             }
             return false;
@@ -330,7 +342,6 @@ namespace task {
             auto t = getTaskByIndex(idx);
             if (t) {
                 t->stop();
-                t->callUpdate();
                 return true;
             }
             return false;
@@ -379,7 +390,7 @@ namespace task {
         void restart() {
             for (auto& t : tasks) {
                 t->stop();
-                t->callUpdate();
+                update_task(t);
                 t->start();
             }
         }
@@ -387,7 +398,7 @@ namespace task {
             auto t = getTaskByName(name);
             if (t) {
                 t->stop();
-                t->callUpdate();
+                update_task(t);
                 t->start();
                 return true;
             }
@@ -397,7 +408,7 @@ namespace task {
             auto t = getTaskByIndex(idx);
             if (t) {
                 t->stop();
-                t->callUpdate();
+                update_task(t);
                 t->start();
                 return true;
             }
