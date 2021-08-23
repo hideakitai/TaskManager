@@ -821,12 +821,16 @@ namespace task {
 #else
                     return (Ref<TaskType>)t;
 #endif
+            LOG_ERROR("No task found named", name);
             return nullptr;
         }
 
         template <typename TaskType = Base>
         Ref<TaskType> getTaskByIndex(const size_t i) const {
-            if (i >= tasks.size()) return nullptr;
+            if (i >= tasks.size()) {
+                LOG_ERROR("Task index is out of bound:", i, "should be <", tasks.size());
+                return nullptr;
+            }
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
             return std::static_pointer_cast<TaskType>(tasks[i]);
