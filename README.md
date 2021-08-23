@@ -18,12 +18,11 @@ and they can be handled like:
 - control timing and behavior of tasks by name and index
 - task callbacks and task classes can be handled in the same way
 
-
 ## Usage
 
 ### Task Callbacks
 
-``` C++
+```C++
 #include <TaskManager.h>
 
 void setup() {
@@ -45,7 +44,7 @@ void loop() {
 
 You can control how to execute tasks by using several methods. Please see APIs section for details.
 
-``` C++
+```C++
 #include <TaskManager.h>
 
 void setup() {
@@ -121,6 +120,64 @@ public:
 };
 ```
 
+### Task Class with Parameters
+
+I recommend to use builder-pattern like method to set parameters to your task class.
+
+```C++
+#include <TaskManager.h>
+
+class Speak : public Task::Base {
+    int num {0};
+
+public:
+    Speak(const String& name)
+    : Base(name) {
+        Serial.begin(115200);
+    }
+
+    virtual ~Speak() {}
+
+    // You can set paramters like builder pattern
+    Speak* number(const int n) {
+        num = n;
+        return this;
+    }
+
+    virtual void update() override {
+        Serial.print("Task ");
+        Serial.println(num);
+    }
+};
+
+void setup() {
+    Tasks.add<Speak>("speak")
+        ->number(123)  // you can set required parameter like this
+        ->startFps(1);
+}
+
+void loop() {
+    Tasks.update();
+}
+```
+
+## Other Options
+
+### Enable Error Info
+
+Error information report is disabled by default. You can enable it by defining this macro.
+
+```C++
+#define TASKMANAGER_DEBUGLOG_ENABLE
+```
+
+Also you can change debug info stream by calling this macro (default: `Serial`).
+
+```C++
+DEBUG_LOG_ATTACH_STREAM(Serial1);
+```
+
+See [DebugLog](https://github.com/hideakitai/DebugLog) for details.
 
 ## APIs
 
@@ -222,8 +279,8 @@ bool isNext(const String& name) const;
 bool isNext(const size_t idx) const;
 bool hasStarted(const String& name) const;
 bool hasStarted(const size_t idx) const;
-bool hasFinished(const String& name) const;
-bool hasFinished(const size_t idx) const;
+bool hasStopped(const String& name) const;
+bool hasStopped(const size_t idx) const;
 
 double frame(const String& name);
 double frame(const size_t idx);
