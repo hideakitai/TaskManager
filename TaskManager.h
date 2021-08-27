@@ -52,7 +52,6 @@ namespace task {
         Manager& operator=(const Manager&) = delete;
 
         TaskList tasks;
-        bool is_auto_erase {false};
 
     public:
         static Manager& get() {
@@ -106,27 +105,14 @@ namespace task {
 
     public:
         void update() {
-            for (auto& t : tasks) {
-                update_task(t);
-            }
-
-            // remove if event has done
-            if (is_auto_erase) {
-#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
-                auto results = std::remove_if(tasks.begin(), tasks.end(),
-                    [&](const Ref<Base>& t) {
-                        return t->hasStopped();
-                    });
-                tasks.erase(results, tasks.end());
-#else
-                auto it = tasks.begin();
-                while (it != tasks.end()) {
-                    if ((*it)->hasStopped())
-                        it = tasks.erase(it);
-                    else
-                        it++;
+            auto it = tasks.begin();
+            while (it != tasks.end()) {
+                update_task(*it);
+                if ((*it)->isStopping() && (*it)->isAutoErase()) {
+                    it = tasks.erase(it);
+                } else {
+                    ++it;
                 }
-#endif
             }
         }
 
@@ -462,16 +448,26 @@ namespace task {
             return true;
         }
 
-        void setAutoErase(const bool b) {
-            is_auto_erase = b;
-        }
-
         void clear() {
             tasks.clear();
         }
 
-        bool isAutoErase() const {
-            return is_auto_erase;
+        void setAutoErase(const String& name, const bool b) {
+            auto t = getTaskByName(name);
+            t->setAutoErase(b);
+        }
+        void setAutoErase(const size_t idx, const bool b) {
+            auto t = getTaskByIndex(idx);
+            t->setAutoErase(b);
+        }
+
+        bool isAutoErase(const String& name) const {
+            auto t = getTaskByName(name);
+            return t->isAutoErase();
+        }
+        bool isAutoErase(const size_t idx) const {
+            auto t = getTaskByIndex(idx);
+            return t->isAutoErase();
         }
 
         bool empty() const {

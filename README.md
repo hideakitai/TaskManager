@@ -117,6 +117,13 @@ public:
     virtual void exit() override {}   // optional: called once after task has stopped
     virtual void idle() override {}   // optional: called when task isn't running (every loop)
     virtual void reset() override {}  // optional
+
+    // always available for each task
+    bool hasEnter() const;
+    bool hasExit() const;
+    void setAutoErase(const bool b);
+    bool isAutoErase() const;
+    const String& getName() const;
 };
 ```
 
@@ -263,8 +270,10 @@ bool reset(const size_t idx);
 bool erase(const String& name);
 bool erase(const size_t idx);
 void clear();
-void setAutoErase(const bool b);
-bool isAutoErase() const;
+void setAutoErase(const String& name, const bool b);
+void setAutoErase(const size_t idx, const bool b);
+bool isAutoErase(const String& name) const;
+bool isAutoErase(const size_t idx) const;
 bool empty() const;
 size_t size() const;
 size_t getActiveTaskSize() const;

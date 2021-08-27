@@ -15,6 +15,7 @@ namespace task {
 
     protected:
         String name;
+        bool b_auto_erase {false};
 
     public:
         Base(const String& name)
@@ -34,6 +35,12 @@ namespace task {
 
         bool hasEnter() const { return this->hasStarted(); }
         bool hasExit() const { return this->hasStopped(); }
+
+        Base* setAutoErase(const bool b) {
+            b_auto_erase = b;
+            return this;
+        }
+        bool isAutoErase() const { return b_auto_erase; }
 
         const String& getName() const { return name; }
     };
