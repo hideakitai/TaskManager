@@ -94,10 +94,11 @@ namespace task {
                 if (t->FrameRateCounter::update()) {
                     t->update();
                 }
-            } else {
                 if (t->hasExit()) {
+                    t->FrameRateCounter::update();  // update internal state
                     t->exit();
                 }
+            } else {
                 t->FrameRateCounter::update();  // update internal state
                 t->idle();
             }
