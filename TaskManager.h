@@ -490,6 +490,11 @@ namespace task {
             return i;
         }
 
+        bool exists(const String& name) const {
+            auto t = getTaskByName(name);
+            return t != nullptr;
+        }
+
         bool isRunning(const String& name) const {
             auto t = getTaskByName(name);
             if (t) return t->isRunning();

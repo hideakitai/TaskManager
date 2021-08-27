@@ -268,6 +268,7 @@ bool isAutoErase() const;
 bool empty() const;
 size_t size() const;
 size_t getActiveTaskSize() const;
+bool exists(const String& name) const;
 
 bool isRunning(const String& name) const;
 bool isRunning(const size_t idx) const;
