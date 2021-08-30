@@ -20,31 +20,33 @@
 #include <iterator>
 #endif
 
+namespace arduino {
+namespace task {
+
+    template <typename T>
+    using Ref = std::shared_ptr<T>;
+    using Func = std::function<void(void)>;
+
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
+    template <typename T>
+    using Vec = std::vector<T>;
+    using namespace std;
+#else
+    template <typename T>
+    using Vec = arx::vector<T>;
+    using namespace arx;
+#endif
+
+}  // namespace task
+}  // namespace arduino
+
 #include "TaskManager/TaskBase.h"
 #include "TaskManager/TaskEmpty.h"
 
 namespace arduino {
 namespace task {
 
-#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
-    template <typename T>
-    using Vec = std::vector<T>;
-    template <typename T>
-    using Ref = std::shared_ptr<T>;
-    using TaskRef = Ref<Base>;
-    using TaskList = Vec<TaskRef>;
-    using Func = std::function<void(void)>;
-    using namespace std;
-#else
-    template <typename T>
-    using Vec = arx::vector<T>;
-    template <typename T>
-    using Ref = std::shared_ptr<T>;
-    using TaskRef = Ref<Base>;
-    using TaskList = Vec<TaskRef>;
-    using Func = std::function<void(void)>;
-    using namespace arx;
-#endif
+    using TaskList = Vec<Ref<Base>>;
 
     class Manager {
         Manager() {}
@@ -71,7 +73,6 @@ namespace task {
             return t;
         }
 
-        // TODO: add variable template for flexible constructor arguments?
         template <typename TaskType>
         Ref<TaskType> add() {
             return add<TaskType>("");
@@ -85,26 +86,6 @@ namespace task {
             return t;
         }
 
-    private:
-        void update_task(TaskRef t) {
-            if (t->isRunning()) {
-                if (t->hasEnter()) {
-                    t->enter();
-                }
-                if (t->FrameRateCounter::update()) {
-                    t->update();
-                }
-                if (t->hasExit()) {
-                    t->FrameRateCounter::update();  // update internal state
-                    t->exit();
-                }
-            } else {
-                t->FrameRateCounter::update();  // update internal state
-                t->idle();
-            }
-        }
-
-    public:
         void update() {
             auto it = tasks.begin();
             while (it != tasks.end()) {
@@ -117,298 +98,17 @@ namespace task {
             }
         }
 
-        void start() {
-            startFromForUsec64(0, 0);
-        }
-        bool start(const String& name) {
-            return startFromForUsec64(name, 0, 0);
-        }
-        bool start(const size_t idx) {
-            return startFromForUsec64(idx, 0, 0);
-        }
-        void startFrom(const double from_sec) {
-            startFromForUsec64(from_sec * 1000000., 0);
-        }
-        bool startFrom(const String& name, const double from_sec) {
-            return startFromForUsec64(name, from_sec * 1000000., 0);
-        }
-        bool startFrom(const size_t idx, const double from_sec) {
-            return startFromForUsec64(idx, from_sec * 1000000., 0);
-        }
-        void startFromMsec(const double from_ms) {
-            startFromForUsec64(from_ms * 1000., 0);
-        }
-        bool startFromMsec(const String& name, const double from_ms) {
-            return startFromForUsec64(name, from_ms * 1000., 0);
-        }
-        bool startFromMsec(const size_t idx, const double from_ms) {
-            return startFromForUsec64(idx, from_ms * 1000., 0);
-        }
-        void startFromUsec(const double from_us) {
-            startFromForUsec64(from_us, 0);
-        }
-        bool startFromUsec(const String& name, const double from_us) {
-            return startFromForUsec64(name, from_us, 0);
-        }
-        bool startFromUsec(const size_t idx, const double from_us) {
-            return startFromForUsec64(idx, from_us, 0);
-        }
-        void startFor(const double for_sec) {
-            startFromForUsec64(0, for_sec * 1000000.);
-        }
-        bool startFor(const String& name, const double for_sec) {
-            return startFromForUsec64(name, 0, for_sec * 1000000.);
-        }
-        bool startFor(const size_t idx, const double for_sec) {
-            return startFromForUsec64(idx, 0, for_sec * 1000000.);
-        }
-        void startForMsec(const double for_ms) {
-            startFromForUsec64(0, for_ms * 1000.);
-        }
-        bool startForMsec(const String& name, const double for_ms) {
-            return startFromForUsec64(name, 0, for_ms * 1000.);
-        }
-        bool startForMsec(const size_t idx, const double for_ms) {
-            return startFromForUsec64(idx, 0, for_ms * 1000.);
-        }
-        void startForUsec(const double for_us) {
-            startFromForUsec64(0, for_us);
-        }
-        bool startForUsec(const String& name, const double for_us) {
-            return startFromForUsec64(name, 0, for_us);
-        }
-        bool startForUsec(const size_t idx, const double for_us) {
-            return startFromForUsec64(idx, 0, for_us);
-        }
-        void startFromFor(const double from_sec, const double for_sec) {
-            startFromForUsec64(from_sec * 1000000., for_sec * 1000000.);
-        }
-        bool startFromFor(const String& name, const double from_sec, const double for_sec) {
-            return startFromForUsec64(name, from_sec * 1000000., for_sec * 1000000.);
-        }
-        bool startFromFor(const size_t idx, const double from_sec, const double for_sec) {
-            return startFromForUsec64(idx, from_sec * 1000000., for_sec * 1000000.);
-        }
-        void startFromForMsec(const double from_ms, const double for_ms) {
-            startFromForUsec64(from_ms * 1000., for_ms * 1000.);
-        }
-        bool startFromForMsec(const String& name, const double from_ms, const double for_ms) {
-            return startFromForUsec64(name, from_ms * 1000., for_ms * 1000.);
-        }
-        bool startFromForMsec(const size_t idx, const double from_ms, const double for_ms) {
-            return startFromForUsec64(idx, from_ms * 1000., for_ms * 1000.);
-        }
-        void startFromForUsec(const double from_us, const double for_us) {
-            startFromForUsec64(from_us, for_us);
-        }
-        bool startFromForUsec(const String& name, const double from_us, const double for_us) {
-            return startFromForUsec64(name, from_us, for_us);
-        }
-        bool startFromForUsec(const size_t idx, const double from_us, const double for_us) {
-            return startFromForUsec64(idx, from_us, for_us);
-        }
-        void startFromForUsec64(const int64_t from_us, const int64_t for_us) {
-            for (auto& t : tasks) t->startFromForUsec64(from_us, for_us);
-        }
-        bool startFromForUsec64(const String& name, const int64_t from_us, const int64_t for_us) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->startFromForUsec64(from_us, for_us);
-                return true;
-            }
-            return false;
-        }
-        bool startFromForUsec64(const size_t idx, const int64_t from_us, const int64_t for_us) {
-            auto t = getTaskByIndex(idx);
-            if (t) {
-                t->startFromForUsec64(from_us, for_us);
-                return true;
-            }
-            return false;
-        }
-
-        void startFps(const double fps) {
-            startFpsFromFor(fps, 0., 0.);
-        }
-        bool startFps(const String& name, const double fps) {
-            return startFpsFromFor(name, fps, 0., 0.);
-        }
-        void startFpsFrom(const double fps, const double from_frame) {
-            startFpsFromFor(fps, from_frame, 0.);
-        }
-        bool startFpsFrom(const String& name, const double fps, const double from_frame) {
-            return startFpsFromFor(name, fps, from_frame, 0.);
-        }
-        void startFpsFor(const double fps, const double for_frame) {
-            startFpsFromFor(fps, 0., for_frame);
-        }
-        bool startFpsFor(const String& name, const double fps, const double for_frame) {
-            return startFpsFromFor(name, fps, 0., for_frame);
-        }
-        void startFpsFromFor(const double fps, const double from_frame, const double for_frame) {
-            for (auto& t : tasks) t->startFpsFromFor(fps, from_frame, for_frame);
-        }
-        bool startFpsFromFor(const String& name, const double fps, const double from_frame, const double for_frame) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->startFpsFromFor(fps, from_frame, for_frame);
-                return true;
-            }
-            return false;
-        }
-
-        void startInterval(const double interval_sec) {
-            startIntervalFromFor(interval_sec, 0., 0.);
-        }
-        bool startInterval(const String& name, const double interval_sec) {
-            return startIntervalFromFor(name, interval_sec, 0., 0.);
-        }
-        bool startInterval(const size_t idx, const double interval_sec) {
-            return startIntervalFromFor(idx, interval_sec, 0., 0.);
-        }
-        void startIntervalFrom(const double interval_sec, const double from_count) {
-            startIntervalFromFor(interval_sec, from_count, 0.);
-        }
-        bool startIntervalFrom(const String& name, const double interval_sec, const double from_count) {
-            return startIntervalFromFor(name, interval_sec, from_count, 0.);
-        }
-        bool startIntervalFrom(const size_t idx, const double interval_sec, const double from_count) {
-            return startIntervalFromFor(idx, interval_sec, from_count, 0.);
-        }
-        void startIntervalFor(const double interval_sec, const double for_count) {
-            startIntervalFromFor(interval_sec, 0., for_count);
-        }
-        bool startIntervalFor(const String& name, const double interval_sec, const double for_count) {
-            return startIntervalFromFor(name, interval_sec, 0., for_count);
-        }
-        bool startIntervalFor(const size_t idx, const double interval_sec, const double for_count) {
-            return startIntervalFromFor(idx, interval_sec, 0., for_count);
-        }
-        void startIntervalFromFor(const double interval_sec, const double from_count, const double for_count) {
-            for (auto& t : tasks) t->startIntervalFromFor(interval_sec, from_count, for_count);
-        }
-        bool startIntervalFromFor(const String& name, const double interval_sec, const double from_count, const double for_count) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->startIntervalFromFor(interval_sec, from_count, for_count);
-                return true;
-            }
-            return false;
-        }
-        bool startIntervalFromFor(const size_t idx, const double interval_sec, const double from_count, const double for_count) {
-            auto t = getTaskByIndex(idx);
-            if (t) {
-                t->startIntervalFromFor(interval_sec, from_count, for_count);
-                return true;
-            }
-            return false;
-        }
-
-        void startOnceAfter(const double after_sec) {
-            startIntervalFor(after_sec, 1);
-        }
-        bool startOnceAfter(const String& name, const double after_sec) {
-            return startIntervalFor(name, after_sec, 1);
-        }
-        bool startOnceAfter(const size_t idx, const double after_sec) {
-            return startIntervalFor(idx, after_sec, 1);
-        }
-
-        void stop() {
-            for (auto& t : tasks) t->stop();
-        }
-        bool stop(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->stop();
-                return true;
-            }
-            return false;
-        }
-        bool stop(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) {
-                t->stop();
-                return true;
-            }
-            return false;
-        }
-
-        void play() {
-            for (auto& t : tasks) t->play();
-        }
-        bool play(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->play();
-                return true;
-            }
-            return false;
-        }
-        bool play(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) {
-                t->play();
-                return true;
-            }
-            return false;
-        }
-
-        void pause() {
-            for (auto& t : tasks) t->pause();
-        }
-        bool pause(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->pause();
-                return true;
-            }
-            return false;
-        }
-        bool pause(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) {
-                t->pause();
-                return true;
-            }
-            return false;
-        }
-
-        void restart() {
-            for (auto& t : tasks) {
-                t->stop();
-                update_task(t);
-                t->start();
-            }
-        }
-        bool restart(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) {
-                t->stop();
-                update_task(t);
-                t->start();
-                return true;
-            }
-            return false;
-        }
-        bool restart(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) {
-                t->stop();
-                update_task(t);
-                t->start();
-                return true;
-            }
-            return false;
-        }
-
         void reset() {
-            for (auto& t : tasks) t->reset();
+            for (auto& t : tasks) {
+                t->reset();
+                reset_subtasks(t);
+            }
         }
         bool reset(const String& name) {
             auto t = getTaskByName(name);
             if (t) {
                 t->reset();
+                reset_subtasks(t);
                 return true;
             }
             return false;
@@ -417,6 +117,7 @@ namespace task {
             auto t = getTaskByIndex(idx);
             if (t) {
                 t->reset();
+                reset_subtasks(t);
                 return true;
             }
             return false;
@@ -425,7 +126,7 @@ namespace task {
         bool erase(const String& name) {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
             auto results = std::remove_if(tasks.begin(), tasks.end(),
-                [&](const TaskRef& t) {
+                [&](const Ref<Base>& t) {
                     return (t->getName() == name);
                 });
             auto it = tasks.erase(results, tasks.end());
@@ -453,30 +154,17 @@ namespace task {
             tasks.clear();
         }
 
-        void setAutoErase(const String& name, const bool b) {
-            auto t = getTaskByName(name);
-            t->setAutoErase(b);
-        }
-        void setAutoErase(const size_t idx, const bool b) {
-            auto t = getTaskByIndex(idx);
-            t->setAutoErase(b);
-        }
-
-        bool isAutoErase(const String& name) const {
-            auto t = getTaskByName(name);
-            return t->isAutoErase();
-        }
-        bool isAutoErase(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            return t->isAutoErase();
-        }
-
         bool empty() const {
             return tasks.size() == 0;
         }
 
         size_t size() const {
             return tasks.size();
+        }
+
+        bool exists(const String& name) const {
+            auto t = getTaskByName(name);
+            return t != nullptr;
         }
 
         size_t getActiveTaskSize() const {
@@ -487,342 +175,16 @@ namespace task {
             return i;
         }
 
-        bool exists(const String& name) const {
-            auto t = getTaskByName(name);
-            return t != nullptr;
+        void setAutoErase(const bool b) {
+            for (auto& t : tasks) {
+                t->setAutoErase(b);
+            }
         }
 
-        bool isRunning(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->isRunning();
-            return false;
-        }
-        bool isRunning(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->isRunning();
-            return false;
-        }
-
-        bool isPausing(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->isPausing();
-            return false;
-        }
-        bool isPausing(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->isPausing();
-            return false;
-        }
-
-        bool isStopping(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->isStopping();
-            return false;
-        }
-        bool isStopping(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->isStopping();
-            return false;
-        }
-
-        bool isNext(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->FrameRateCounter::update();
-            return false;
-        }
-        bool isNext(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->FrameRateCounter::update();
-            return false;
-        }
-
-        bool hasStarted(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->hasStarted();
-            return false;
-        }
-        bool hasStarted(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->hasStarted();
-            return false;
-        }
-
-        bool hasStopped(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->hasStopped();
-            return false;
-        }
-        bool hasStopped(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->hasStopped();
-            return false;
-        }
-
-        double frame(const String& name) {
-            auto t = getTaskByName(name);
-            if (t)
-                return t->frame();
-            else
-                return 0.;
-        }
-        double frame(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t)
-                return t->frame();
-            else
-                return 0.;
-        }
-
-        double count(const String& name) {
-            auto t = getTaskByName(name);
-            if (t)
-                return t->count();
-            else
-                return 0.;
-        }
-        double count(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t)
-                return t->count();
-            else
-                return 0.;
-        }
-
-        int64_t usec64(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) return t->usec64();
-            return 0;
-        }
-        int64_t usec64(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->usec64();
-            return 0;
-        }
-
-        double usec(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) return t->usec();
-            return 0.;
-        }
-        double usec(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->usec();
-            return 0.;
-        }
-
-        double msec(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) return t->msec();
-            return 0.;
-        }
-        double msec(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->msec();
-            return 0.;
-        }
-
-        double sec(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) return t->sec();
-            return 0.;
-        }
-        double sec(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->sec();
-            return 0.;
-        }
-
-        double getDuration(const String& name) const {
-            auto t = getTaskByName(name);
-            if (t) return t->getDuration();
-            return 0.;
-        }
-        double getDuration(const size_t idx) const {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->getDuration();
-            return 0.;
-        }
-
-        double getRemainingTime(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) return t->getRemainingTime();
-            return 0.;
-        }
-        double getRemainingTime(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->getRemainingTime();
-            return 0.;
-        }
-
-        double getRemainingLife(const String& name) {
-            auto t = getTaskByName(name);
-            if (t) return t->getRemainingLife();
-            return 0.;
-        }
-        double getRemainingLife(const size_t idx) {
-            auto t = getTaskByIndex(idx);
-            if (t) return t->getRemainingLife();
-            return 0.;
-        }
-
-        void setOffset(const double sec) {
-            for (auto& t : tasks)
-                t->setOffsetSec(sec);
-        }
-        void setOffset(const String& name, const double sec) {
-            auto t = getTaskByName(name);
-            if (t) t->setOffsetSec(sec);
-        }
-        void setOffset(const size_t idx, const double sec) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setOffsetSec(sec);
-        }
-        void setOffsetMsec(const double ms) {
-            for (auto& t : tasks)
-                t->setOffsetMsec(ms);
-        }
-        void setOffsetMsec(const String& name, const double ms) {
-            auto t = getTaskByName(name);
-            if (t) t->setOffsetMsec(ms);
-        }
-        void setOffsetMsec(const size_t idx, const double ms) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setOffsetMsec(ms);
-        }
-        void setOffsetUsec(const double us) {
-            for (auto& t : tasks)
-                t->setOffsetUsec(us);
-        }
-        void setOffsetUsec(const String& name, const double us) {
-            auto t = getTaskByName(name);
-            if (t) t->setOffsetUsec(us);
-        }
-        void setOffsetUsec(const size_t idx, const double us) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setOffsetUsec(us);
-        }
-        void setOffsetUsec64(const int64_t us) {
-            for (auto& t : tasks)
-                t->setOffsetUsec64(us);
-        }
-        void setOffsetUsec64(const String& name, const int64_t us) {
-            auto t = getTaskByName(name);
-            if (t) t->setOffsetUsec64(us);
-        }
-        void setOffsetUsec64(const size_t idx, const int64_t us) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setOffsetUsec64(us);
-        }
-
-        void addOffset(const double sec) {
-            for (auto& t : tasks)
-                t->addOffsetSec(sec);
-        }
-        void addOffset(const String& name, const double sec) {
-            auto t = getTaskByName(name);
-            if (t) t->addOffsetSec(sec);
-        }
-        void addOffset(const size_t idx, const double sec) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->addOffsetSec(sec);
-        }
-        void addOffsetMsec(const double ms) {
-            for (auto& t : tasks)
-                t->addOffsetMsec(ms);
-        }
-        void addOffsetMsec(const String& name, const double ms) {
-            auto t = getTaskByName(name);
-            if (t) t->addOffsetMsec(ms);
-        }
-        void addOffsetMsec(const size_t idx, const double ms) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->addOffsetMsec(ms);
-        }
-        void addOffsetUsec(const double us) {
-            for (auto& t : tasks)
-                t->addOffsetUsec(us);
-        }
-        void addOffsetUsec(const String& name, const double us) {
-            auto t = getTaskByName(name);
-            if (t) t->addOffsetUsec(us);
-        }
-        void addOffsetUsec(const size_t idx, const double us) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->addOffsetUsec(us);
-        }
-        void addOffsetUsec64(const int64_t us) {
-            for (auto& t : tasks)
-                t->addOffsetUsec64(us);
-        }
-        void addOffsetUsec64(const String& name, const int64_t us) {
-            auto t = getTaskByName(name);
-            if (t) t->addOffsetUsec64(us);
-        }
-        void addOffsetUsec64(const size_t idx, const int64_t us) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->addOffsetUsec64(us);
-        }
-
-        void setTime(const double sec) {
-            for (auto& t : tasks)
-                t->setTimeSec(sec);
-        }
-        void setTime(const String& name, const double sec) {
-            auto t = getTaskByName(name);
-            if (t) t->setTimeSec(sec);
-        }
-        void setTime(const size_t idx, const double sec) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setTimeSec(sec);
-        }
-        void setTimeMsec(const double ms) {
-            for (auto& t : tasks)
-                t->setTimeMsec(ms);
-        }
-        void setTimeMsec(const String& name, const double ms) {
-            auto t = getTaskByName(name);
-            if (t) t->setTimeMsec(ms);
-        }
-        void setTimeMsec(const size_t idx, const double ms) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setTimeMsec(ms);
-        }
-        void setTimeUsec(const double us) {
-            for (auto& t : tasks)
-                t->setTimeUsec(us);
-        }
-        void setTimeUsec(const String& name, const double us) {
-            auto t = getTaskByName(name);
-            if (t) t->setTimeUsec(us);
-        }
-        void setTimeUsec(const size_t idx, const double us) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setTimeUsec(us);
-        }
-        void setTimeUsec64(const int64_t us) {
-            for (auto& t : tasks)
-                t->setTimeUsec64(us);
-        }
-        void setTimeUsec64(const String& name, const int64_t us) {
-            auto t = getTaskByName(name);
-            if (t) t->setTimeUsec64(us);
-        }
-        void setTimeUsec64(const size_t idx, const int64_t us) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setTimeUsec64(us);
-        }
-
-        void setFrameRate(float fps) {
-            for (auto& t : tasks)
-                t->setFrameRate(fps);
-        }
-        void setFrameRate(const String& name, float fps) {
-            auto t = getTaskByName(name);
-            if (t) t->setFrameRate(fps);
-        }
-        void setFrameRate(const size_t idx, float fps) {
-            auto t = getTaskByIndex(idx);
-            if (t) t->setFrameRate(fps);
+        void setSubTaskMode(const SubTaskMode m) {
+            for (auto& t : tasks) {
+                t->setSubTaskMode(m);
+            }
         }
 
         template <typename TaskType = Base>
@@ -861,6 +223,415 @@ namespace task {
         Ref<TaskType> operator[](const size_t i) const {
             return getTaskByIndex(i);
         }
+
+        // ========== Task method wrappers ==========
+
+        void start() {
+            for (auto& t : tasks) t->start();
+        }
+
+        void startFromSec(const double from_sec) {
+            for (auto& t : tasks) t->startFromSec(from_sec);
+        }
+        void startFromMsec(const double from_ms) {
+            for (auto& t : tasks) t->startFromMsec(from_ms);
+        }
+        void startFromUsec(const double from_us) {
+            for (auto& t : tasks) t->startFromUsec(from_us);
+        }
+
+        void startForSec(const double for_sec, const bool loop = false) {
+            for (auto& t : tasks) t->startForSec(for_sec, loop);
+        }
+        void startForMsec(const double for_ms, const bool loop = false) {
+            for (auto& t : tasks) t->startForMsec(for_ms, loop);
+        }
+        void startForUsec(const double for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startForUsec(for_us, loop);
+        }
+
+        void startFromForSec(const double from_sec, const double for_sec, const bool loop = false) {
+            for (auto& t : tasks) t->startFromForSec(from_sec, for_sec, loop);
+        }
+        void startFromForMsec(const double from_ms, const double for_ms, const bool loop = false) {
+            for (auto& t : tasks) t->startFromForMsec(from_ms, for_ms, loop);
+        }
+        void startFromForUsec(const double from_us, const double for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startFromForUsec(from_us, for_us, loop);
+        }
+        void startFromForUsec64(const int64_t from_us, const int64_t for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startFromForUsec64(from_us, for_us, loop);
+        }
+
+        void startFromCount(const double from_count) {
+            for (auto& t : tasks) t->startFromCount(from_count);
+        }
+        void startForCount(const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startForCount(for_count, loop);
+        }
+        void startFromForCount(const double from_count, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startFromForCount(from_count, for_count, loop);
+        }
+
+        void startIntervalSec(const double interval_sec) {
+            for (auto& t : tasks) t->startIntervalSec(interval_sec);
+        }
+        void startIntervalMsec(const double interval_ms) {
+            for (auto& t : tasks) t->startIntervalMsec(interval_ms);
+        }
+        void startIntervalUsec(const double interval_us) {
+            for (auto& t : tasks) t->startIntervalUsec(interval_us);
+        }
+
+        void startIntervalFromSec(const double interval_sec, const double from_sec) {
+            for (auto& t : tasks) t->startIntervalFromSec(interval_sec, from_sec);
+        }
+        void startIntervalFromMsec(const double interval_ms, const double from_ms) {
+            for (auto& t : tasks) t->startIntervalFromMsec(interval_ms, from_ms);
+        }
+        void startIntervalFromUsec(const double interval_us, const double from_us) {
+            for (auto& t : tasks) t->startIntervalFromUsec(interval_us, from_us);
+        }
+        void startIntervalSecFromCount(const double interval_sec, const double from_count) {
+            for (auto& t : tasks) t->startIntervalSecFromCount(interval_sec, from_count);
+        }
+        void startIntervalMsecFromCount(const double interval_ms, const double from_count) {
+            for (auto& t : tasks) t->startIntervalMsecFromCount(interval_ms, from_count);
+        }
+        void startIntervalUsecFromCount(const double interval_us, const double from_count) {
+            for (auto& t : tasks) t->startIntervalUsecFromCount(interval_us, from_count);
+        }
+
+        void startIntervalForSec(const double interval_sec, const double for_sec, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalForSec(interval_sec, for_sec, loop);
+        }
+        void startIntervalForMsec(const double interval_ms, const double for_ms, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalForMsec(interval_ms, for_ms, loop);
+        }
+        void startIntervalForUsec(const double interval_us, const double for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalForUsec(interval_us, for_us, loop);
+        }
+        void startIntervalSecForCount(const double interval_sec, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalSecForCount(interval_sec, for_count, loop);
+        }
+        void startIntervalMsecForCount(const double interval_ms, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalMsecForCount(interval_ms, for_count, loop);
+        }
+        void startIntervalUsecForCount(const double interval_us, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalUsecForCount(interval_us, for_count, loop);
+        }
+
+        void startIntervalFromForSec(const double interval_sec, const double from_sec, const double for_sec, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalFromForSec(interval_sec, from_sec, for_sec, loop);
+        }
+        void startIntervalFromForMsec(const double interval_ms, const double from_ms, const double for_ms, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalFromForMsec(interval_ms, from_ms, for_ms, loop);
+        }
+        void startIntervalFromForUsec(const double interval_us, const double from_us, const double for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalFromForUsec(interval_us, from_us, for_us, loop);
+        }
+        void startIntervalSecFromForCount(const double interval_sec, const double from_count, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalSecFromForCount(interval_sec, from_count, for_count, loop);
+        }
+        void startIntervalMsecFromForCount(const double interval_ms, const double from_count, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalMsecFromForCount(interval_ms, from_count, for_count, loop);
+        }
+        void startIntervalUsecFromForCount(const double interval_us, const double from_count, const double for_count, const bool loop = false) {
+            for (auto& t : tasks) t->startIntervalUsecFromForCount(interval_us, from_count, for_count, loop);
+        }
+
+        void startFromFrame(const double from_frame) {
+            for (auto& t : tasks) t->startFromFrame(from_frame);
+        }
+
+        void startForFrame(const double for_frame, const bool loop = false) {
+            for (auto& t : tasks) t->startForFrame(for_frame, loop);
+        }
+
+        void startFromForFrame(const double from_frame, const double for_frame, const bool loop = false) {
+            for (auto& t : tasks) t->startFromForFrame(from_frame, for_frame, loop);
+        }
+
+        void startFps(const double fps) {
+            for (auto& t : tasks) t->startFps(fps);
+        }
+
+        void startFpsFromSec(const double fps, const double from_sec) {
+            for (auto& t : tasks) t->startFpsFromSec(fps, from_sec);
+        }
+        void startFpsFromMsec(const double fps, const double from_ms) {
+            for (auto& t : tasks) t->startFpsFromMsec(fps, from_ms);
+        }
+        void startFpsFromUsec(const double fps, const double from_us) {
+            for (auto& t : tasks) t->startFpsFromUsec(fps, from_us);
+        }
+        void startFpsFromFrame(const double fps, const double from_frame) {
+            for (auto& t : tasks) t->startFpsFromFrame(fps, from_frame);
+        }
+
+        void startFpsForSec(const double fps, const double for_sec, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsForSec(fps, for_sec, loop);
+        }
+        void startFpsForMsec(const double fps, const double for_ms, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsForMsec(fps, for_ms, loop);
+            startFpsFromForMsec(fps, 0., for_ms, loop);
+        }
+        void startFpsForUsec(const double fps, const double for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsForUsec(fps, for_us, loop);
+        }
+        void startFpsForFrame(const double fps, const double for_frame, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsForFrame(fps, for_frame, loop);
+        }
+
+        void startFpsFromForSec(const double fps, const double from_sec, const double for_sec, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsFromForSec(fps, from_sec, for_sec, loop);
+        }
+        void startFpsFromForMsec(const double fps, const double from_ms, const double for_ms, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsFromForMsec(fps, from_ms, for_ms, loop);
+        }
+        void startFpsFromForUsec(const double fps, const double from_us, const double for_us, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsFromForUsec(fps, from_us, for_us, loop);
+        }
+        void startFpsFromForFrame(const double fps, const double from_frame, const double for_frame, const bool loop = false) {
+            for (auto& t : tasks) t->startFpsFromForFrame(fps, from_frame, for_frame, loop);
+        }
+
+        void startOnce() {
+            for (auto& t : tasks) t->startOnce();
+        }
+        void startOnceAfterSec(const double after_sec) {
+            for (auto& t : tasks) t->startOnceAfterSec(after_sec);
+        }
+        void startOnceAfterMsec(const double after_ms) {
+            for (auto& t : tasks) t->startOnceAfterMsec(after_ms);
+        }
+        void startOnceAfterUsec(const double after_us) {
+            for (auto& t : tasks) t->startOnceAfterUsec(after_us);
+        }
+
+        void stop() {
+            for (auto& t : tasks) t->stop();
+        }
+
+        void play() {
+            for (auto& t : tasks) t->play();
+        }
+
+        void pause() {
+            for (auto& t : tasks) t->pause();
+        }
+
+        void restart() {
+            for (auto& t : tasks) {
+                t->stop();
+                update_task(t);
+                t->restart();
+            }
+        }
+
+        void setOffsetSec(const double sec) {
+            for (auto& t : tasks) t->setOffsetSec(sec);
+        }
+        void setOffsetMsec(const double ms) {
+            for (auto& t : tasks) t->setOffsetMsec(ms);
+        }
+        void setOffsetUsec(const double us) {
+            for (auto& t : tasks) t->setOffsetUsec(us);
+        }
+        void setOffsetUsec64(const int64_t us) {
+            for (auto& t : tasks) t->setOffsetUsec64(us);
+        }
+
+        void addOffsetSec(const double sec) {
+            for (auto& t : tasks) t->addOffsetSec(sec);
+        }
+        void addOffsetMsec(const double ms) {
+            for (auto& t : tasks) t->addOffsetMsec(ms);
+        }
+        void addOffsetUsec(const double us) {
+            for (auto& t : tasks) t->addOffsetUsec(us);
+        }
+        void addOffsetUsec64(const int64_t us) {
+            for (auto& t : tasks) t->addOffsetUsec64(us);
+        }
+
+        void setDurationSec(const double sec) {
+            for (auto& t : tasks) t->setDurationSec(sec);
+        }
+        void setDurationMsec(const double ms) {
+            for (auto& t : tasks) t->setDurationMsec(ms);
+        }
+        void setDurationUsec(const double us) {
+            for (auto& t : tasks) t->setDurationUsec(us);
+        }
+        void setDurationUsec64(const int64_t us) {
+            for (auto& t : tasks) t->setDurationUsec64(us);
+        }
+
+        void setTimeSec(const double sec) {
+            for (auto& t : tasks) t->setTimeSec(sec);
+        }
+        void setTimeMsec(const double ms) {
+            for (auto& t : tasks) t->setTimeMsec(ms);
+        }
+        void setTimeUsec(const double us) {
+            for (auto& t : tasks) t->setTimeUsec(us);
+        }
+        void setTimeUsec64(const int64_t us) {
+            for (auto& t : tasks) t->setTimeUsec64(us);
+        }
+
+        void setLoop(const bool b) {
+            for (auto& t : tasks) t->setLoop(b);
+        }
+
+        void setIntervalSec(const double sec) {
+            for (auto& t : tasks) t->setIntervalSec(sec);
+        }
+        void setIntervalMsec(const double ms) {
+            for (auto& t : tasks) t->setIntervalMsec(ms);
+        }
+        void setIntervalUsec(const double us) {
+            for (auto& t : tasks) t->setIntervalUsec(us);
+        }
+        void setIntervalUsec64(const int64_t us) {
+            for (auto& t : tasks) t->setIntervalUsec64(us);
+        }
+
+        void setOffsetCount(const double count) {
+            for (auto& t : tasks) t->setOffsetCount(count);
+        }
+
+        void setOffsetFrame(const double frame) {
+            for (auto& t : tasks) t->setOffsetFrame(frame);
+        }
+
+        void setFrameRate(float fps) {
+            for (auto& t : tasks) t->setFrameRate(fps);
+        }
+
+    private:
+        void start_subtask(Ref<Base> t, const size_t idx, const int64_t us) {
+            t->setSubTaskIndex(idx);
+
+            auto st = t->getSubTasks()[idx];
+            double interval_sec = st->hasInterval() ? st->getIntervalSec() : t->getIntervalSec();
+            double offset_sec = st->hasOffset() ? st->getOffsetSec() : t->getOffsetSec();
+            double duration_sec = st->hasDuration() ? st->getDurationSec() : t->getDurationSec();
+            st->startIntervalFromForSec(interval_sec, offset_sec, duration_sec);
+
+            // compensate the time difference of main task and sub tasks
+            st->setTimeUsec64(us - t->getCurrentDurationSecSum() * 1000000);
+            st->enter();
+        }
+
+        void enter_subtasks(Ref<Base> t) {
+            int64_t us = t->usec64();
+            switch (t->getSubTaskMode()) {
+                case SubTaskMode::SYNC: {
+                    auto& subtasks = t->getSubTasks();
+                    for (auto& st : subtasks) {
+                        st->startIntervalFromForSec(t->getIntervalSec(), t->getOffsetSec(), t->getDurationSec());
+                        st->setTimeUsec64(us);
+                        st->enter();
+                    }
+                    break;
+                }
+                case SubTaskMode::SEQUENCE: {
+                    start_subtask(t, 0, us);
+                    break;
+                }
+            }
+        }
+
+        void update_subtasks(Ref<Base> t) {
+            auto& subtasks = t->getSubTasks();
+            switch (t->getSubTaskMode()) {
+                case SubTaskMode::SYNC: {
+                    for (auto& st : subtasks) {
+                        if (st->FrameRateCounter::update())
+                            st->update();
+                    }
+                    break;
+                }
+                case SubTaskMode::SEQUENCE: {
+                    size_t idx = t->getSubTaskIndex();
+                    if (subtasks[idx]->FrameRateCounter::update()) {
+                        subtasks[idx]->update();
+                    }
+                    if (subtasks[idx]->hasExit()) {
+                        subtasks[idx]->exit();
+                        if (++idx < t->numSubTasks()) {
+                            start_subtask(t, idx, t->usec64());
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        void exit_subtasks(Ref<Base> t) {
+            auto& subtasks = t->getSubTasks();
+            switch (t->getSubTaskMode()) {
+                case SubTaskMode::SYNC: {
+                    for (auto& st : subtasks) {
+                        if (st->FrameRateCounter::update())
+                            st->update();
+                        // force call exit() (sync with parent)
+                        st->exit();
+                    }
+                    break;
+                }
+                case SubTaskMode::SEQUENCE: {
+                    // exit active subtask
+                    auto st = subtasks[t->getSubTaskIndex()];
+                    if (st->FrameRateCounter::update())
+                        st->update();
+                    // call exit() if running
+                    if (st->isRunning())
+                        st->exit();
+                    break;
+                }
+            }
+        }
+
+        void idle_subtasks(Ref<Base> t) {
+            auto& subtasks = t->getSubTasks();
+            for (auto& st : subtasks) {
+                st->idle();
+            }
+        }
+
+        void reset_subtasks(Ref<Base> t) {
+            auto& subtasks = t->getSubTasks();
+            for (auto& st : subtasks) {
+                st->reset();
+            }
+        }
+
+        void update_task(Ref<Base> t) {
+            if (t->isRunning()) {
+                if (t->hasEnter()) {
+                    t->enter();
+                    if (t->hasSubTasks()) enter_subtasks(t);
+                }
+                if (t->FrameRateCounter::update()) {
+                    t->update();
+                }
+                if (t->hasSubTasks()) update_subtasks(t);
+            } else {
+                t->idle();
+                if (t->hasSubTasks()) idle_subtasks(t);
+            }
+            if (t->hasExit()) {
+                t->FrameRateCounter::update();  // update internal state
+                t->exit();
+                if (t->hasSubTasks()) exit_subtasks(t);
+            }
+            // TODO: t->exit() is not called if t->isLoop() == true
+            // TODO: but t->enter() is called if looped
+            // TODO: because it stop() -> start() inside of PollingTimer
+        }
     };
 
 }  // namespace task
@@ -879,6 +650,10 @@ namespace task {
 
 #define Tasks arduino::task::Manager::get()
 namespace Task = arduino::task;
+
+template <typename T = Task::Base>
+using TaskRef = Task::Ref<T>;
+using SubTaskMode = Task::SubTaskMode;
 
 #include "TaskManager/util/DebugLog/DebugLogRestoreState.h"
 
