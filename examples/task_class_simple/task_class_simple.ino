@@ -5,7 +5,7 @@
 void setup() {
     delay(2000);
     Tasks.add<Blink>()->startFps(1.);
-    Tasks.add<Speak>("speak")->startInterval(0.5);
+    Tasks.add<Speak>("speak")->startIntervalSec(0.5);
 }
 
 void loop() {

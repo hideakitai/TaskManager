@@ -8,18 +8,18 @@ void setup() {
     // task framerate is 1 and repeat forever
     Tasks.add("task1", [&] {
              Serial.print("framerate task1: frame = ");
-             Serial.print(Tasks.frame("task1"));
+             Serial.print(Tasks["task1"]->frame());
              Serial.print(", time = ");
-             Serial.println(Tasks.msec("task1"));
+             Serial.println(Tasks["task1"]->msec());
          })
         ->startFps(1);
 
     // task framerate is 2 and repeat forever
     Tasks.add("task2", [&] {
              Serial.print("framerate task2: frame = ");
-             Serial.print(Tasks.frame("task2"));
+             Serial.print(Tasks["task2"]->frame());
              Serial.print(", time = ");
-             Serial.println(Tasks.msec("task2"));
+             Serial.println(Tasks["task2"]->msec());
          })
         ->startFps(1);
 
@@ -30,14 +30,14 @@ void setup() {
 void loop() {
     Tasks.update();
 
-    if (Tasks.frame("task1") >= 5) {
-        Tasks.stop("task1");
+    if (Tasks["task1"]->frame() >= 5) {
+        Tasks["task1"]->stop();
     }
-    if (Tasks.frame("task2") >= 10) {
-        Tasks.stop("task2");
+    if (Tasks["task2"]->frame() >= 10) {
+        Tasks["task2"]->stop();
     }
     if (Tasks.getActiveTaskSize() == 0) {
-        Tasks.start("task1");               // start() runs the task with same setting
-        Tasks.startInterval("task2", 1.5);  // change interval to 1.5sec and start task
+        Tasks["task1"]->start();                // start() runs the task with same setting
+        Tasks["task2"]->startIntervalSec(1.5);  // change interval to 1.5sec and start task
     }
 }

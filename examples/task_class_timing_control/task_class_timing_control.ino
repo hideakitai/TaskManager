@@ -12,15 +12,13 @@ void setup() {
     Tasks.add<SpeakEvent>("task2");
 
     // you can also start by:
-    // Tasks.startFps(1.);                // start all task at once
-    // Tasks.startInterval("task2", 0.5); // start "task2"
+    // Tasks.startFps(1.);                     // start all task at once
+    // Tasks["task2"]->startIntervalSec(0.5);  // start "task2"
 
     Serial.print("all tasks are ");
     Serial.println(Tasks.size());
     Serial.print("active tasks are ");
     Serial.println(Tasks.getActiveTaskSize());
-    Serial.print("auto erase : ");
-    Serial.println(Tasks.isAutoErase() ? "true" : "false");
 
     Serial.println("main loop start");
 }
@@ -28,34 +26,34 @@ void setup() {
 void loop() {
     Tasks.update();
 
-    if (Tasks.frame("task1") >= 5 && !Tasks.isRunning("task2")) {
+    if (Tasks["task1"]->frame() >= 5 && !Tasks["task2"]->isRunning()) {
         Serial.print("all tasks are ");
         Serial.println(Tasks.size());
         Serial.print("active tasks are ");
         Serial.println(Tasks.getActiveTaskSize());
 
         Serial.println("start task2");
-        Tasks.startFps("task2", 2);
+        Tasks["task2"]->startFps(2);
     }
 
-    if (Tasks.frame("task1") >= 10) {
+    if (Tasks["task1"]->frame() >= 10) {
         Serial.print("all tasks are ");
         Serial.println(Tasks.size());
         Serial.print("active tasks are ");
         Serial.println(Tasks.getActiveTaskSize());
 
         Serial.println("stop task1");
-        Tasks.stop("task1");
+        Tasks["task1"]->stop();
     }
 
-    if (Tasks.frame("task2") >= 7) {
+    if (Tasks["task2"]->frame() >= 7) {
         Serial.print("all tasks are ");
         Serial.println(Tasks.size());
         Serial.print("active tasks are ");
         Serial.println(Tasks.getActiveTaskSize());
 
         Serial.println("stop task2");
-        Tasks.stop("task2");
+        Tasks["task2"]->stop();
     }
 
     if (millis() > 10000 && !Tasks.empty()) {
@@ -75,7 +73,7 @@ void loop() {
         Serial.println(Tasks.getActiveTaskSize());
     }
 
-    if (millis() > 11000) {
+    if (Tasks.empty()) {
         Serial.println("end");
         while (true)
             ;
