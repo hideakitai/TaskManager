@@ -103,13 +103,13 @@ public:
         startForCount(1);
     }
     void startOnceAfterSec(const double after_sec) {
-        startIntervalForSec(after_sec, 1);
+        startIntervalSecForCount(after_sec, 1);
     }
     void startOnceAfterMsec(const double after_ms) {
-        startIntervalForMsec(after_ms, 1);
+        startIntervalMsecForCount(after_ms, 1);
     }
     void startOnceAfterUsec(const double after_us) {
-        startIntervalForUsec(after_us, 1);
+        startIntervalUsecForCount(after_us, 1);
     }
 
     void stop() {
