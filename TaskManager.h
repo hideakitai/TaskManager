@@ -505,7 +505,7 @@ namespace task {
             for (auto& t : tasks) t->setOffsetFrame(frame);
         }
 
-        void setFrameRate(float fps) {
+        void setFrameRate(const float fps) {
             for (auto& t : tasks) t->setFrameRate(fps);
         }
 
