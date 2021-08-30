@@ -112,6 +112,79 @@ namespace task {
 
         // ========== only for SubTaskMode::SEQUENCE ==========
 
+        bool nextSubTask() {
+            if (mode == SubTaskMode::SEQUENCE) {
+                if (!hasFixedSubTaskDuration())
+                    return nextSubTaskImpl();
+                else {
+                    LOG_ERROR("Couldn't run next subtask: At least one subtask should NOT have duration");
+                    return false;
+                }
+            } else {
+                LOG_ERROR("Couldn't run next subtask: SubTaskMode should be SEQUENCE");
+                return false;
+            }
+        }
+
+    private:
+        bool startSubTask(const size_t idx) {
+            if (idx < numSubTasks()) {
+                int64_t us = this->usec64();
+                subtask_index = idx;
+                auto st = subtasks[idx];
+                double interval_sec = st->hasInterval() ? st->getIntervalSec() : getIntervalSec();
+                double offset_sec = st->hasOffset() ? st->getOffsetSec() : getOffsetSec();
+                double duration_sec = st->hasDuration() ? st->getDurationSec() : getDurationSec();
+                st->startIntervalFromForSec(interval_sec, offset_sec, duration_sec);
+
+                // compensate the time difference of main task and sub tasks
+                if (hasFixedSubTaskDuration())
+                    st->setTimeUsec64(us - getCurrentDurationSecSum() * 1000000);
+
+                st->enter();
+                return true;
+            } else {
+                LOG_ERROR("Couldn't run next subtask: index", idx, "should <", numSubTasks());
+                return false;
+            }
+        }
+
+        bool nextSubTaskImpl() {
+            if (mode == SubTaskMode::SEQUENCE) {
+                auto st = subtasks[subtask_index];
+                if (st->isRunning()) {
+                    st->stop();
+                    if (st->hasExit()) {
+                        subtasks[subtask_index]->exit();
+                    }
+                }
+                return startSubTask(subtask_index + 1);
+            } else {
+                LOG_ERROR("Couldn't run next subtask: SubTaskMode should be SEQUENCE");
+                return false;
+            }
+        }
+
+        bool proceedToNextSubTask() {
+            if (mode == SubTaskMode::SEQUENCE) {
+                if (hasFixedSubTaskDuration()) {
+                    return nextSubTaskImpl();
+                } else {
+                    LOG_ERROR("Couldn't run next subtask: Every subtask should have duration");
+                    return false;
+                }
+            } else {
+                LOG_ERROR("Couldn't run next subtask: SubTaskMode should be SEQUENCE");
+                return false;
+            }
+        }
+
+        bool hasFixedSubTaskDuration() const {
+            for (const auto& st : subtasks)
+                if (!st->hasDuration()) return false;
+            return true;
+        }
+
         double getCurrentDurationSec() const {
             if (mode == SubTaskMode::SEQUENCE)
                 return subtasks[subtask_index]->getDurationSec();
@@ -121,13 +194,14 @@ namespace task {
 
         double getCurrentDurationSecSum() const {
             if (mode == SubTaskMode::SEQUENCE) {
-                double d = 0.;
-                for (size_t i = 0; i < subtask_index; ++i)
-                    d += subtasks[i]->getDurationSec();
-                return d;
-            } else {
-                return 0.;
+                if (hasFixedSubTaskDuration()) {
+                    double d = 0.;
+                    for (size_t i = 0; i < subtask_index; ++i)
+                        d += subtasks[i]->getDurationSec();
+                    return d;
+                }
             }
+            return 0.;
         }
     };
 

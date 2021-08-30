@@ -511,20 +511,6 @@ namespace task {
         }
 
     private:
-        void start_subtask(Ref<Base> t, const size_t idx, const int64_t us) {
-            t->setSubTaskIndex(idx);
-
-            auto st = t->getSubTasks()[idx];
-            double interval_sec = st->hasInterval() ? st->getIntervalSec() : t->getIntervalSec();
-            double offset_sec = st->hasOffset() ? st->getOffsetSec() : t->getOffsetSec();
-            double duration_sec = st->hasDuration() ? st->getDurationSec() : t->getDurationSec();
-            st->startIntervalFromForSec(interval_sec, offset_sec, duration_sec);
-
-            // compensate the time difference of main task and sub tasks
-            st->setTimeUsec64(us - t->getCurrentDurationSecSum() * 1000000);
-            st->enter();
-        }
-
         void enter_subtasks(Ref<Base> t) {
             int64_t us = t->usec64();
             switch (t->getSubTaskMode()) {
@@ -538,7 +524,7 @@ namespace task {
                     break;
                 }
                 case SubTaskMode::SEQUENCE: {
-                    start_subtask(t, 0, us);
+                    t->startSubTask(0);
                     break;
                 }
             }
@@ -561,9 +547,7 @@ namespace task {
                     }
                     if (subtasks[idx]->hasExit()) {
                         subtasks[idx]->exit();
-                        if (++idx < t->numSubTasks()) {
-                            start_subtask(t, idx, t->usec64());
-                        }
+                        t->proceedToNextSubTask();
                     }
                     break;
                 }
