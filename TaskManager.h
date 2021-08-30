@@ -374,7 +374,6 @@ namespace task {
         }
         void startFpsForMsec(const double fps, const double for_ms, const bool loop = false) {
             for (auto& t : tasks) t->startFpsForMsec(fps, for_ms, loop);
-            startFpsFromForMsec(fps, 0., for_ms, loop);
         }
         void startFpsForUsec(const double fps, const double for_us, const bool loop = false) {
             for (auto& t : tasks) t->startFpsForUsec(fps, for_us, loop);
