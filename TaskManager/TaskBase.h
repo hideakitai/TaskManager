@@ -9,11 +9,14 @@ namespace arduino {
 namespace task {
 
     enum class SubTaskMode : uint8_t {
+        NA,
+        PARALLEL,
         SYNC,
         SEQUENCE
     };
 
     class Manager;
+    class TaskEmpty;
 
     class Base : public FrameRateCounter {
         friend class Manager;
@@ -24,10 +27,9 @@ namespace task {
 
         // for SubTask
         Vec<Ref<Base>> subtasks;
-        SubTaskMode mode {SubTaskMode::SYNC};
+        SubTaskMode mode {SubTaskMode::NA};
         // only for SubTaskMode::SEQUENCE
         uint8_t subtask_index {0};
-        Vec<double> subtask_durations;
 
     public:
         Base(const String& name)
@@ -67,13 +69,70 @@ namespace task {
         // =========== for SubTask ==========
 
         template <typename TaskType>
-        Base* subtask(const String& name, std::function<void(Ref<TaskType>)> setup) {
+        Base* subtask(const std::function<void(Ref<TaskType>)>& setup) {
+            return subtask("", setup);
+        }
+        template <typename TaskType>
+        Base* subtask(const String& name, const std::function<void(Ref<TaskType>)>& setup) {
+            if ((mode != SubTaskMode::NA) && (mode != SubTaskMode::PARALLEL)) {
+                LOG_ERROR("All subtask should be same mode (should be added by same method)");
+                return nullptr;
+            }
+            setSubTaskMode(SubTaskMode::PARALLEL);
             Ref<TaskType> t = std::make_shared<TaskType>(name);
             subtasks.emplace_back(t);
             t->begin();
             setup(t);
-            subtask_durations.emplace_back(t->getDurationUsec());
             return this;
+        }
+
+        template <typename TaskType>
+        Base* sync(const std::function<void(Ref<TaskType>)>& setup) {
+            return sync("", setup);
+        }
+        template <typename TaskType>
+        Base* sync(const String& name, const std::function<void(Ref<TaskType>)>& setup) {
+            if ((mode != SubTaskMode::NA) && (mode != SubTaskMode::SYNC)) {
+                LOG_ERROR("All subtask should be same mode (should be added by same method)");
+                return nullptr;
+            }
+            setSubTaskMode(SubTaskMode::SYNC);
+            Ref<TaskType> t = std::make_shared<TaskType>(name);
+            subtasks.emplace_back(t);
+            t->begin();
+            setup(t);
+            return this;
+        }
+
+        template <typename TaskType>
+        Base* then(const std::function<void(Ref<TaskType>)>& setup) {
+            return then("", 0, setup);
+        }
+        template <typename TaskType>
+        Base* then(const String& name, const std::function<void(Ref<TaskType>)>& setup) {
+            return then(name, 0, setup);
+        }
+        template <typename TaskType>
+        Base* then(const double sec, const std::function<void(Ref<TaskType>)>& setup) {
+            return then("", sec, setup);
+        }
+        template <typename TaskType>
+        Base* then(const String& name, const double sec, const std::function<void(Ref<TaskType>)>& setup) {
+            if ((mode != SubTaskMode::NA) && (mode != SubTaskMode::SEQUENCE)) {
+                LOG_ERROR("All subtask should be same mode (should be added by same method)");
+                return nullptr;
+            }
+            setSubTaskMode(SubTaskMode::SEQUENCE);
+            Ref<TaskType> t = std::make_shared<TaskType>(name);
+            subtasks.emplace_back(t);
+            t->setDurationSec(sec);
+            t->begin();
+            setup(t);
+            return this;
+        }
+
+        Base* hold(const double sec) {
+            return then<TaskEmpty>("", sec, [](Ref<TaskEmpty>) {});
         }
 
         Vec<Ref<Base>>& getSubTasks() {
@@ -108,6 +167,50 @@ namespace task {
 
         size_t numSubTasks() const {
             return subtasks.size();
+        }
+
+        bool existsSubTask(const String& name) const {
+            for (auto& t : subtasks)
+                if (t->getName() == name)
+                    return true;
+            return false;
+        }
+
+        template <typename TaskType = Base>
+        Ref<TaskType> getSubTaskByName(const String& name) const {
+            for (auto& t : subtasks)
+                if (t->getName() == name)
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
+                    return std::static_pointer_cast<TaskType>(t);
+#else
+                    return (Ref<TaskType>)t;
+#endif
+            LOG_ERROR("No task found named", name);
+            return nullptr;
+        }
+
+        template <typename TaskType = Base>
+        Ref<TaskType> getSubTaskByIndex(const size_t i) const {
+            if (i >= subtasks.size()) {
+                LOG_ERROR("Task index is out of bound:", i, "should be <", subtasks.size());
+                return nullptr;
+            }
+
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
+            return std::static_pointer_cast<TaskType>(subtasks[i]);
+#else
+            return (Ref<TaskType>)subtasks[i];
+#endif
+        }
+
+        template <typename TaskType = Base>
+        Ref<TaskType> operator[](const String& name) const {
+            return getSubTaskByName(name);
+        }
+
+        template <typename TaskType = Base>
+        Ref<TaskType> operator[](const size_t i) const {
+            return getSubTaskByIndex(i);
         }
 
         // ========== only for SubTaskMode::SEQUENCE ==========
@@ -158,7 +261,12 @@ namespace task {
                         subtasks[subtask_index]->exit();
                     }
                 }
-                return startSubTask(subtask_index + 1);
+                if (subtask_index + 1 < subtasks.size())
+                    return startSubTask(subtask_index + 1);
+                else {
+                    LOG_WARN("No more subtasks : index", subtask_index, "size", numSubTasks());
+                    return false;
+                }
             } else {
                 LOG_ERROR("Couldn't run next subtask: SubTaskMode should be SEQUENCE");
                 return false;
@@ -167,12 +275,7 @@ namespace task {
 
         bool proceedToNextSubTask() {
             if (mode == SubTaskMode::SEQUENCE) {
-                if (hasFixedSubTaskDuration()) {
-                    return nextSubTaskImpl();
-                } else {
-                    LOG_ERROR("Couldn't run next subtask: Every subtask should have duration");
-                    return false;
-                }
+                return nextSubTaskImpl();
             } else {
                 LOG_ERROR("Couldn't run next subtask: SubTaskMode should be SEQUENCE");
                 return false;

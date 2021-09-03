@@ -97,6 +97,24 @@ namespace task {
                 }
             }
         }
+        void update(const String& name) {
+            auto task = getTaskByName(name);
+            if (task) {
+                update_task(task);
+                if (task->isStopping() && task->isAutoErase()) {
+                    erase(name);
+                }
+            }
+        }
+        void update(const size_t idx) {
+            auto task = getTaskByIndex(idx);
+            if (task) {
+                update_task(task);
+                if (task->isStopping() && task->isAutoErase()) {
+                    erase(idx);
+                }
+            }
+        }
 
         void reset() {
             for (auto& t : tasks) {
@@ -163,8 +181,10 @@ namespace task {
         }
 
         bool exists(const String& name) const {
-            auto t = getTaskByName(name);
-            return t != nullptr;
+            for (auto& t : tasks)
+                if (t->getName() == name)
+                    return true;
+            return false;
         }
 
         size_t getActiveTaskSize() const {
@@ -526,12 +546,28 @@ namespace task {
                     t->startSubTask(0);
                     break;
                 }
+                default: {
+                    break;
+                }
             }
         }
 
         void update_subtasks(Ref<Base> t) {
             auto& subtasks = t->getSubTasks();
             switch (t->getSubTaskMode()) {
+                case SubTaskMode::PARALLEL: {
+                    // same procedure with main task
+                    // but its behavior is allowd only when the parent task is running
+                    auto it = subtasks.begin();
+                    while (it != subtasks.end()) {
+                        update_task(*it);
+                        if ((*it)->isStopping() && (*it)->isAutoErase()) {
+                            it = subtasks.erase(it);
+                        } else {
+                            ++it;
+                        }
+                    }
+                }
                 case SubTaskMode::SYNC: {
                     for (auto& st : subtasks) {
                         if (st->FrameRateCounter::update())
@@ -546,8 +582,12 @@ namespace task {
                     }
                     if (subtasks[idx]->hasExit()) {
                         subtasks[idx]->exit();
-                        t->proceedToNextSubTask();
+                        if (idx + 1 < t->numSubTasks())
+                            t->proceedToNextSubTask();
                     }
+                    break;
+                }
+                default: {
                     break;
                 }
             }
@@ -556,26 +596,50 @@ namespace task {
         void exit_subtasks(Ref<Base> t) {
             auto& subtasks = t->getSubTasks();
             switch (t->getSubTaskMode()) {
+                case SubTaskMode::PARALLEL: {
+                    for (auto& st : subtasks) {
+                        st->stop();
+                        if (st->hasExit()) {
+                            st->FrameRateCounter::update();
+                            st->exit();
+                        }
+                    }
+                    // if auto erase is enabled, erase it
+                    auto it = subtasks.begin();
+                    while (it != subtasks.end()) {
+                        if ((*it)->isStopping() && (*it)->isAutoErase()) {
+                            it = subtasks.erase(it);
+                        } else {
+                            ++it;
+                        }
+                    }
+                    break;
+                }
                 case SubTaskMode::SYNC: {
                     for (auto& st : subtasks) {
-                        if (st->FrameRateCounter::update())
-                            st->update();
-                        // force call exit() (sync with parent)
-                        st->exit();
+                        st->stop();
+                        if (st->hasExit()) {
+                            st->FrameRateCounter::update();
+                            st->exit();
+                        }
                     }
                     break;
                 }
                 case SubTaskMode::SEQUENCE: {
                     // exit active subtask
                     auto st = subtasks[t->getSubTaskIndex()];
-                    if (st->FrameRateCounter::update())
-                        st->update();
-                    // call exit() if running
-                    if (st->isRunning())
+                    st->stop();
+                    if (st->hasExit()) {
+                        st->FrameRateCounter::update();
                         st->exit();
+                    }
+                    break;
+                }
+                default: {
                     break;
                 }
             }
+            t->setSubTaskIndex(0);
         }
 
         void idle_subtasks(Ref<Base> t) {
@@ -590,6 +654,7 @@ namespace task {
             for (auto& st : subtasks) {
                 st->reset();
             }
+            t->setSubTaskIndex(0);
         }
 
         void update_task(Ref<Base> t) {
@@ -634,8 +699,9 @@ namespace task {
 #define Tasks arduino::task::Manager::get()
 namespace Task = arduino::task;
 
-template <typename T = Task::Base>
+template <typename T>
 using TaskRef = Task::Ref<T>;
+using TaskBaseRef = TaskRef<Task::Base>;
 using SubTaskMode = Task::SubTaskMode;
 
 #include "TaskManager/util/DebugLog/DebugLogRestoreState.h"

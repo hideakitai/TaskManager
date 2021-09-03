@@ -6,18 +6,16 @@ void setup() {
     delay(2000);
 
     Tasks.add<Speak>("Main")
-        // You can set SubTaskMode (default: SubTaskMode::SYNC)
-        ->setSubTaskMode(SubTaskMode::SEQUENCE)
-
-        // Add subtasks
-        ->subtask<Speak>("Sub1", [&](TaskRef<Speak> task) {
-            // configure subtasks by lambda
-            task->number(1);
+        // Add subtasks without duration
+        ->then<Speak>("Sub1", [&](TaskRef<Speak> task) {
+            task->number(1);  // configure subtasks by lambda
         })
-        ->subtask<Speak>("Sub2", [&](TaskRef<Speak> task) {
+        // You can mix the subtasks with duration 3[sec]
+        ->then<Speak>("Sub2", 3, [&](TaskRef<Speak> task) {
             task->number(2);
         })
-        ->subtask<Speak>("Sub3", [&](TaskRef<Speak> task) {
+        // You should explicitly call nextSubTask() to exit the subtask without duration
+        ->then<Speak>("Sub3", [&](TaskRef<Speak> task) {
             task->number(3);
         });
 
