@@ -1,5 +1,3 @@
-// #define TASKMANAGER_DEBUGLOG_ENABLE
-
 #include <TaskManager.h>
 #include "Speak.h"
 
@@ -31,29 +29,29 @@ void setup() {
 void loop() {
     Tasks.update();
 
-    if ((*Tasks["Main"])["Sub1"]) {
+    if (Tasks["Main"]->existsSubTask("Sub1")) {
         auto st = (*Tasks["Main"])["Sub1"];
         if (st->isRunning() && (st->frame() >= 3.)) {
             st->stop();
-            if ((*Tasks["Main"])["Sub2"])
+            if (Tasks["Main"]->existsSubTask("Sub2"))
                 (*Tasks["Main"])["Sub2"]->startFps(1.);
         }
     }
 
-    if ((*Tasks["Main"])["Sub2"]) {
+    if (Tasks["Main"]->existsSubTask("Sub2")) {
         auto st = (*Tasks["Main"])["Sub2"];
         if (st->isRunning() && (st->frame() >= 3.)) {
             st->stop();
-            if ((*Tasks["Main"])["Sub3"])
+            if (Tasks["Main"]->existsSubTask("Sub3"))
                 (*Tasks["Main"])["Sub3"]->startFps(1.);
         }
     }
 
-    if ((*Tasks["Main"])["Sub3"]) {
+    if (Tasks["Main"]->existsSubTask("Sub3")) {
         auto st = (*Tasks["Main"])["Sub3"];
         if (st->isRunning() && (st->frame() >= 3.)) {
             st->stop();
-            if ((*Tasks["Main"])["Sub1"])
+            if (Tasks["Main"]->existsSubTask("Sub1"))
                 (*Tasks["Main"])["Sub1"]->startFps(1.);
         }
     }
