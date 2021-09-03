@@ -196,12 +196,6 @@ namespace task {
             }
         }
 
-        void setSubTaskMode(const SubTaskMode m) {
-            for (auto& t : tasks) {
-                t->setSubTaskMode(m);
-            }
-        }
-
         template <typename TaskType = Base>
         Ref<TaskType> getTaskByName(const String& name) const {
             for (auto& t : tasks)
