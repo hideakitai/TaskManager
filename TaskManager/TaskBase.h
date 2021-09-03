@@ -28,8 +28,7 @@ namespace task {
         // for SubTask
         Vec<Ref<Base>> subtasks;
         SubTaskMode mode {SubTaskMode::NA};
-        // only for SubTaskMode::SEQUENCE
-        uint8_t subtask_index {0};
+        uint8_t subtask_index {0};  // only for SubTaskMode::SEQUENCE
 
     public:
         Base(const String& name)
@@ -46,6 +45,32 @@ namespace task {
         virtual void exit() {};
         virtual void idle() {};
         virtual void reset() {};
+
+        virtual void stop() override {
+            FrameRateCounter::stop();
+            for (auto& st : subtasks) st->stop();
+            subtask_index = 0;
+        }
+
+        virtual void restart() override {
+            this->update();  // only in restart()
+            for (auto& st : subtasks) {
+                if (st->isRunning()) st->update();
+            }
+            this->stop();
+            if (hasExit()) exit_recursive();
+            FrameRateCounter::restart();
+            if (hasEnter()) enter_recursive();
+            releaseEventTrigger();  // disable hasExit()
+        }
+
+        virtual void clear() override {
+            stop();
+            subtasks.clear();
+            mode = SubTaskMode::NA;
+            subtask_index = 0;
+            FrameRateCounter::clear();
+        }
 
         bool hasEnter() const {
             return this->hasStarted();
@@ -230,6 +255,172 @@ namespace task {
         }
 
     private:
+        void begin_recursive() {
+            this->begin();
+            for (auto& st : subtasks) {
+                st->begin();
+            }
+        }
+
+        void enter_recursive() {
+            this->enter();
+
+            int64_t us = usec64();
+            switch (getSubTaskMode()) {
+                case SubTaskMode::SYNC: {
+                    for (auto& st : subtasks) {
+                        st->startIntervalFromForSec(getIntervalSec(), getOffsetSec(), getDurationSec());
+                        st->setTimeUsec64(us);
+                        st->enter();
+                    }
+                    break;
+                }
+                case SubTaskMode::SEQUENCE: {
+                    startSubTask(0);
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+
+        void update_recursive() {
+            if (isRunning()) {
+                if (hasEnter()) {
+                    releaseEventTrigger();  // disable hasExit()
+                    enter_recursive();
+                }
+
+                if (FrameRateCounter::update()) {
+                    this->update();
+                }
+
+                if (hasSubTasks()) {
+                    switch (getSubTaskMode()) {
+                        case SubTaskMode::PARALLEL: {
+                            // same procedure with main task
+                            // but its behavior is allowd only when the parent task is running
+                            auto it = subtasks.begin();
+                            while (it != subtasks.end()) {
+                                (*it)->update_recursive();
+                                if ((*it)->isStopping() && (*it)->isAutoErase()) {
+                                    it = subtasks.erase(it);
+                                } else {
+                                    ++it;
+                                }
+                            }
+                        }
+                        case SubTaskMode::SYNC: {
+                            // update all subtasks
+                            for (auto& st : subtasks) {
+                                if (st->FrameRateCounter::update()) {
+                                    st->update();
+                                }
+                            }
+                            break;
+                        }
+                        case SubTaskMode::SEQUENCE: {
+                            // update subtasks one by one
+                            const size_t idx = getSubTaskIndex();
+                            auto st = subtasks[idx];
+                            if (st->FrameRateCounter::update()) {
+                                st->update();
+                            }
+                            // for duration ends
+                            if (st->hasExit()) {
+                                st->releaseEventTrigger();  // disable hasExit()
+                                st->exit();
+                                if (idx + 1 < numSubTasks())
+                                    proceedToNextSubTask();
+                            }
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                idle_recursive();
+            }
+            // for external trigger
+            if (hasExit()) {
+                releaseEventTrigger();  // disable hasExit()
+                exit_recursive();
+            }
+        }
+
+        void exit_recursive() {
+            if (hasSubTasks()) {
+                switch (getSubTaskMode()) {
+                    case SubTaskMode::PARALLEL: {
+                        for (auto& st : subtasks) {
+                            if (st->isRunning())
+                                st->stop();
+                            if (st->hasExit()) {
+                                st->releaseEventTrigger();  // disable hasExit()
+                                st->exit();
+                            }
+                        }
+                        // if auto erase is enabled, erase it
+                        auto it = subtasks.begin();
+                        while (it != subtasks.end()) {
+                            if ((*it)->isStopping() && (*it)->isAutoErase()) {
+                                it = subtasks.erase(it);
+                            } else {
+                                ++it;
+                            }
+                        }
+                        break;
+                    }
+                    case SubTaskMode::SYNC: {
+                        for (auto& st : subtasks) {
+                            if (st->isRunning())
+                                st->stop();
+                            if (st->hasExit()) {
+                                st->releaseEventTrigger();  // disable hasExit()
+                                st->exit();
+                            }
+                        }
+                        break;
+                    }
+                    case SubTaskMode::SEQUENCE: {
+                        // exit active subtask
+                        auto st = subtasks[getSubTaskIndex()];
+                        if (st->isRunning()) {
+                            st->stop();
+                        }
+                        if (st->hasExit()) {
+                            st->releaseEventTrigger();  // disable hasExit()
+                            st->exit();
+                        }
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+            subtask_index = 0;
+            this->exit();
+        }
+
+        void idle_recursive() {
+            this->idle();
+            for (auto& st : subtasks) {
+                st->idle();
+            }
+        }
+
+        void reset_recursive() {
+            for (auto& st : subtasks) {
+                st->reset();
+            }
+            this->reset();
+            subtask_index = 0;
+        }
+
         bool startSubTask(const size_t idx) {
             if (idx < numSubTasks()) {
                 int64_t us = this->usec64();
@@ -257,9 +448,10 @@ namespace task {
                 auto st = subtasks[subtask_index];
                 if (st->isRunning()) {
                     st->stop();
-                    if (st->hasExit()) {
-                        subtasks[subtask_index]->exit();
-                    }
+                }
+                if (st->hasExit()) {
+                    st->releaseEventTrigger();  // disable hasExit()
+                    st->exit();
                 }
                 if (subtask_index + 1 < subtasks.size())
                     return startSubTask(subtask_index + 1);
