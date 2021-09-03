@@ -162,9 +162,49 @@ void loop() {
 }
 ```
 
+## SubTasks (`SubTaskMode::PARALLEL`)
+
+The default behavior of subtasks: `SubTaskMode::PARALLEL` runs subtasks as same as the general tasks. The only difference is the tasks are organized under the parent task. This mode is useful if you want to organize tasks for several main and sub tasks. Please use `subtask()` method to use `PARALLEL` mode.
+
+```C++
+#include <TaskManager.h>
+#include "Speak.h"
+
+void setup() {
+    Serial.begin(115200);
+    delay(2000);
+
+    Tasks.add<Speak>("Main")
+        // Just iadd subtasks by subtask() method
+        // This is completely same as usual tasks other than
+        // it can be controlled only while parent task is running
+        ->subtask<Speak>("Sub1", [&](TaskRef<Speak> task) {
+            task->number(1);  // configure subtasks by lambda
+            task->setAutoErase(true);
+        })
+        ->subtask<Speak>("Sub2", [&](TaskRef<Speak> task) {
+            task->number(2);
+            task->setAutoErase(false);
+        })
+        ->subtask<Speak>("Sub3", [&](TaskRef<Speak> task) {
+            task->number(3);
+            task->setAutoErase(false);
+        });
+
+    Tasks["Main"]->startFps(1.);
+    (*Tasks["Main"])["Sub1"]->startFps(1.);
+    (*Tasks["Main"])["Sub2"]->startFps(1.);
+    (*Tasks["Main"])["Sub3"]->startFps(1.);
+}
+
+void loop() {
+    Tasks.update();
+}
+```
+
 ## SubTasks (`SubTaskMode::SYNC`)
 
-The default behavior of subtasks: `SubTaskMode::SYNC` runs subtasks synchronously with parent task. If parent task starts, subtasks also start. If parent task stops, subtasks also stop.
+`SubTaskMode::SYNC` runs subtasks synchronously with parent task. If parent task starts, subtasks also start. If parent task stops, subtasks also stop. Please use `sync()` method and lambda function to add/configure subtasks.
 
 ```C++
 #include <TaskManager.h>
@@ -175,13 +215,13 @@ The default behavior of subtasks: `SubTaskMode::SYNC` runs subtasks synchronousl
 
 void setup() {
     Tasks.add<Speak>("Main")
-        ->subtask<Speak>("Sub1", [&](TaskRef<Speak> task) {
+        ->sync<Speak>("Sub1", [&](TaskRef<Speak> task) {
             task->number(1);  // configure subtasks by lambda
         })
-        ->subtask<Speak>("Sub2", [&](TaskRef<Speak> task) {
+        ->sync<Speak>("Sub2", [&](TaskRef<Speak> task) {
             task->number(2);
         })
-        ->subtask<Speak>("Sub3", [&](TaskRef<Speak> task) {
+        ->sync<Speak>("Sub3", [&](TaskRef<Speak> task) {
             task->number(3);
         });
 
@@ -196,11 +236,10 @@ void loop() {
 
 ## SubTasks (`SubTaskMode::SEQUENCE`)
 
-On the other hand, `SubTaskMode::SEQUENCE` runs subtasks one by one if the current subtask stops. There are two way to control it. One is "Auto Run" and the other is "Manual Run".
+On the other hand, `SubTaskMode::SEQUENCE` runs subtasks one by one if the current subtask stops. There are two way to control it. One is "Auto Run" and the other is "Manual Run". Please use `then()` method for both way.
 
 ### Automatically run subtasks one by one
 
-- `SubTaskMode` should be `SubTaskMode::SEQUENCE`
 - All subtask should have duration
 - Parent task should have longer duration than the sum of subtasks' duration
 - If the current task has finished the duration, next subtask starts running automatically
@@ -214,17 +253,15 @@ On the other hand, `SubTaskMode::SEQUENCE` runs subtasks one by one if the curre
 
 void setup() {
     Tasks.add<Speak>("Main")
-        // You can set SubTaskMode (default: SubTaskMode::SYNC)
-        ->setSubTaskMode(SubTaskMode::SEQUENCE)
-
-        ->subtask<Speak>("Sub1", [&](TaskRef<Speak> task) {
-            task->number(1)->setDurationSec(3);
+        // Add subtasks
+        ->then<Speak>("Sub1", 3, [&](TaskRef<Speak> task) {
+            task->number(1);
         })
-        ->subtask<Speak>("Sub2", [&](TaskRef<Speak> task) {
-            task->number(2)->setDurationSec(3);
+        ->then<Speak>("Sub2", 3, [&](TaskRef<Speak> task) {
+            task->number(2);
         })
-        ->subtask<Speak>("Sub3", [&](TaskRef<Speak> task) {
-            task->number(3)->setDurationSec(3);
+        ->then<Speak>("Sub3", 3, [&](TaskRef<Speak> task) {
+            task->number(3);
         });
 
     // You can also choose whether to loop
@@ -241,7 +278,6 @@ void loop() {
 
 ### Manually run next subtasks
 
-- `SubTaskMode` should be `SubTaskMode::SEQUENCE`
 - At least one subtask should NOT have duration (the timings of subtasks should not be fixed)
 - `nextSubTask()` method will stop current subtask and run next subtask
 
@@ -254,17 +290,14 @@ void loop() {
 
 void setup() {
     Tasks.add<Speak>("Main")
-        // You can set SubTaskMode (default: SubTaskMode::SYNC)
-        ->setSubTaskMode(SubTaskMode::SEQUENCE)
-
         // Add subtasks
-        ->subtask<Speak>("Sub1", [&](TaskRef<Speak> task) {
+        ->then<Speak>("Sub1", [&](TaskRef<Speak> task) {
             task->number(1);
         })
-        ->subtask<Speak>("Sub2", [&](TaskRef<Speak> task) {
+        ->then<Speak>("Sub2", [&](TaskRef<Speak> task) {
             task->number(2);
         })
-        ->subtask<Speak>("Sub3", [&](TaskRef<Speak> task) {
+        ->then<Speak>("Sub3", [&](TaskRef<Speak> task) {
             task->number(3);
         });
 
@@ -322,6 +355,8 @@ template <typename TaskType> Ref<TaskType> add();
 template <typename TaskType> Ref<TaskType> add(const String& name);
 
 void update();
+void update(const String& name);
+void update(const size_t idx);
 void reset();
 bool reset(const String& name);
 bool reset(const size_t idx);
@@ -334,7 +369,6 @@ bool exists(const String& name) const;
 
 size_t getActiveTaskSize() const;
 void setAutoErase(const bool b);
-void setSubTaskMode(const SubTaskMode m);
 template <typename TaskType = Base> Ref<TaskType> getTaskByName(const String& name) const;
 template <typename TaskType = Base> Ref<TaskType> getTaskByIndex(const size_t i) const;
 template <typename TaskType = Base> Ref<TaskType> operator[](const String& name) const;
@@ -449,6 +483,8 @@ void setFrameRate(const float fps);
 
 ### Task::Base
 
+This class inherits [FrameRateCounter](https://github.com/hideakitai/PollingTimer). Please refer the link for available inherited methods.
+
 ```C++
 bool hasEnter() const {
 bool hasExit() const {
@@ -456,8 +492,23 @@ Base* setAutoErase(const bool b) {
 bool isAutoErase() const {
 const String& getName() const {
 
-// =========== for SubTask ==========
-template <typename TaskType> Base* subtask(const String& name, std::function<void(Ref<TaskType>)> setup);
+// =========== SubTask Creation ==========
+
+template <typename TaskType> Base* subtask(const std::function<void(Ref<TaskType>)>& setup);
+template <typename TaskType> Base* subtask(const String& name, const std::function<void(Ref<TaskType>)>& setup);
+
+template <typename TaskType> Base* sync(const std::function<void(Ref<TaskType>)>& setup);
+template <typename TaskType> Base* sync(const String& name, const std::function<void(Ref<TaskType>)>& setup);
+
+template <typename TaskType> Base* then(const std::function<void(Ref<TaskType>)>& setup);
+template <typename TaskType> Base* then(const String& name, const std::function<void(Ref<TaskType>)>& setup);
+template <typename TaskType> Base* then(const double sec, const std::function<void(Ref<TaskType>)>& setup);
+template <typename TaskType> Base* then(const String& name, const double sec, const std::function<void(Ref<TaskType>)>& setup);
+
+Base* hold(const double sec);
+
+// =========== SubTask Utility ==========
+
 Vec<Ref<Base>>& getSubTasks();
 const Vec<Ref<Base>>& getSubTasks() const;
 Base* setSubTaskIndex(const size_t i);
@@ -466,9 +517,16 @@ Base* setSubTaskMode(const SubTaskMode m);
 SubTaskMode getSubTaskMode() const;
 bool hasSubTasks() const;
 size_t numSubTasks() const;
+bool existsSubTask(const String& name) const;
+
+template <typename TaskType = Base> Ref<TaskType> getSubTaskByName(const String& name) const;
+template <typename TaskType = Base> Ref<TaskType> getSubTaskByIndex(const size_t i) const;
+template <typename TaskType = Base> Ref<TaskType> operator[](const String& name) const;
+template <typename TaskType = Base> Ref<TaskType> operator[](const size_t i) const;
 
 // ========== only for SubTaskMode::SEQUENCE ==========
-bool nextSubTask()
+
+bool nextSubTask();
 ```
 
 ### Types
@@ -477,6 +535,8 @@ bool nextSubTask()
 
 
 enum class SubTaskMode : uint8_t {
+    NA,
+    PARALLEL,
     SYNC,
     SEQUENCE
 };
@@ -484,7 +544,7 @@ enum class SubTaskMode : uint8_t {
 
 ## Embedded Libraries
 
-- [PollingTimer v0.4.0](https://github.com/hideakitai/PollingTimer)
+- [PollingTimer v0.4.2](https://github.com/hideakitai/PollingTimer)
 - [ArxContainer v0.3.14](https://github.com/hideakitai/ArxContainer)
 - [ArxSmartPtr v0.2.1](https://github.com/hideakitai/ArxSmartPtr)
 - [DebugLog v0.6.0](https://github.com/hideakitai/DebugLog)
