@@ -546,7 +546,7 @@ enum class SubTaskMode : uint8_t {
 
 - [PollingTimer v0.4.2](https://github.com/hideakitai/PollingTimer)
 - [ArxContainer v0.4.0](https://github.com/hideakitai/ArxContainer)
-- [ArxSmartPtr v0.2.1](https://github.com/hideakitai/ArxSmartPtr)
+- [ArxSmartPtr v0.2.3](https://github.com/hideakitai/ArxSmartPtr)
 - [DebugLog v0.6.1](https://github.com/hideakitai/DebugLog)
 - [TeensyDirtySTLErrorSolution v0.1.0](https://github.com/hideakitai/TeensyDirtySTLErrorSolution)
 
