@@ -28,7 +28,7 @@ namespace task {
         // for SubTask
         Vec<Ref<Base>> subtasks;
         SubTaskMode mode {SubTaskMode::NA};
-        uint8_t subtask_index {0};  // only for SubTaskMode::SEQUENCE
+        size_t subtask_index {0};  // only for SubTaskMode::SEQUENCE
 
     public:
         Base(const String& name)
