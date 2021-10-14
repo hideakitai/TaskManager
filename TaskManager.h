@@ -138,10 +138,8 @@ namespace task {
 
         bool erase(const String& name) {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
-            auto results = std::remove_if(tasks.begin(), tasks.end(),
-                [&](const Ref<Base>& t) {
-                    return (t->getName() == name);
-                });
+            auto results =
+                std::remove_if(tasks.begin(), tasks.end(), [&](const Ref<Base>& t) { return (t->getName() == name); });
             auto it = tasks.erase(results, tasks.end());
             return it != tasks.end();
 #else
@@ -177,8 +175,7 @@ namespace task {
 
         bool exists(const String& name) const {
             for (auto& t : tasks)
-                if (t->getName() == name)
-                    return true;
+                if (t->getName() == name) return true;
             return false;
         }
 
@@ -330,22 +327,28 @@ namespace task {
             for (auto& t : tasks) t->startIntervalUsecForCount(interval_us, for_count, loop);
         }
 
-        void startIntervalFromForSec(const double interval_sec, const double from_sec, const double for_sec, const bool loop = false) {
+        void startIntervalFromForSec(
+            const double interval_sec, const double from_sec, const double for_sec, const bool loop = false) {
             for (auto& t : tasks) t->startIntervalFromForSec(interval_sec, from_sec, for_sec, loop);
         }
-        void startIntervalFromForMsec(const double interval_ms, const double from_ms, const double for_ms, const bool loop = false) {
+        void startIntervalFromForMsec(
+            const double interval_ms, const double from_ms, const double for_ms, const bool loop = false) {
             for (auto& t : tasks) t->startIntervalFromForMsec(interval_ms, from_ms, for_ms, loop);
         }
-        void startIntervalFromForUsec(const double interval_us, const double from_us, const double for_us, const bool loop = false) {
+        void startIntervalFromForUsec(
+            const double interval_us, const double from_us, const double for_us, const bool loop = false) {
             for (auto& t : tasks) t->startIntervalFromForUsec(interval_us, from_us, for_us, loop);
         }
-        void startIntervalSecFromForCount(const double interval_sec, const double from_count, const double for_count, const bool loop = false) {
+        void startIntervalSecFromForCount(
+            const double interval_sec, const double from_count, const double for_count, const bool loop = false) {
             for (auto& t : tasks) t->startIntervalSecFromForCount(interval_sec, from_count, for_count, loop);
         }
-        void startIntervalMsecFromForCount(const double interval_ms, const double from_count, const double for_count, const bool loop = false) {
+        void startIntervalMsecFromForCount(
+            const double interval_ms, const double from_count, const double for_count, const bool loop = false) {
             for (auto& t : tasks) t->startIntervalMsecFromForCount(interval_ms, from_count, for_count, loop);
         }
-        void startIntervalUsecFromForCount(const double interval_us, const double from_count, const double for_count, const bool loop = false) {
+        void startIntervalUsecFromForCount(
+            const double interval_us, const double from_count, const double for_count, const bool loop = false) {
             for (auto& t : tasks) t->startIntervalUsecFromForCount(interval_us, from_count, for_count, loop);
         }
 
@@ -391,16 +394,20 @@ namespace task {
             for (auto& t : tasks) t->startFpsForFrame(fps, for_frame, loop);
         }
 
-        void startFpsFromForSec(const double fps, const double from_sec, const double for_sec, const bool loop = false) {
+        void startFpsFromForSec(
+            const double fps, const double from_sec, const double for_sec, const bool loop = false) {
             for (auto& t : tasks) t->startFpsFromForSec(fps, from_sec, for_sec, loop);
         }
-        void startFpsFromForMsec(const double fps, const double from_ms, const double for_ms, const bool loop = false) {
+        void startFpsFromForMsec(
+            const double fps, const double from_ms, const double for_ms, const bool loop = false) {
             for (auto& t : tasks) t->startFpsFromForMsec(fps, from_ms, for_ms, loop);
         }
-        void startFpsFromForUsec(const double fps, const double from_us, const double for_us, const bool loop = false) {
+        void startFpsFromForUsec(
+            const double fps, const double from_us, const double for_us, const bool loop = false) {
             for (auto& t : tasks) t->startFpsFromForUsec(fps, from_us, for_us, loop);
         }
-        void startFpsFromForFrame(const double fps, const double from_frame, const double for_frame, const bool loop = false) {
+        void startFpsFromForFrame(
+            const double fps, const double from_frame, const double for_frame, const bool loop = false) {
             for (auto& t : tasks) t->startFpsFromForFrame(fps, from_frame, for_frame, loop);
         }
 

@@ -8,12 +8,7 @@
 namespace arduino {
 namespace task {
 
-    enum class SubTaskMode : uint8_t {
-        NA,
-        PARALLEL,
-        SYNC,
-        SEQUENCE
-    };
+    enum class SubTaskMode : uint8_t { NA, PARALLEL, SYNC, SEQUENCE };
 
     class Manager;
     class TaskEmpty;
@@ -31,8 +26,7 @@ namespace task {
         size_t subtask_index {0};  // only for SubTaskMode::SEQUENCE
 
     public:
-        Base(const String& name)
-        : FrameRateCounter(), name(name) {};
+        Base(const String& name) : FrameRateCounter(), name(name) {};
         Base(const Base&) = default;
         Base& operator=(const Base&) = default;
         Base(Base&&) = default;
@@ -196,8 +190,7 @@ namespace task {
 
         bool existsSubTask(const String& name) const {
             for (auto& t : subtasks)
-                if (t->getName() == name)
-                    return true;
+                if (t->getName() == name) return true;
             return false;
         }
 
@@ -331,8 +324,7 @@ namespace task {
                             if (st->hasExit()) {
                                 st->releaseEventTrigger();  // disable hasExit()
                                 st->exit();
-                                if (idx + 1 < numSubTasks())
-                                    proceedToNextSubTask();
+                                if (idx + 1 < numSubTasks()) proceedToNextSubTask();
                             }
                             break;
                         }
@@ -356,8 +348,7 @@ namespace task {
                 switch (getSubTaskMode()) {
                     case SubTaskMode::PARALLEL: {
                         for (auto& st : subtasks) {
-                            if (st->isRunning())
-                                st->stop();
+                            if (st->isRunning()) st->stop();
                             if (st->hasExit()) {
                                 st->releaseEventTrigger();  // disable hasExit()
                                 st->exit();
@@ -376,8 +367,7 @@ namespace task {
                     }
                     case SubTaskMode::SYNC: {
                         for (auto& st : subtasks) {
-                            if (st->isRunning())
-                                st->stop();
+                            if (st->isRunning()) st->stop();
                             if (st->hasExit()) {
                                 st->releaseEventTrigger();  // disable hasExit()
                                 st->exit();
@@ -432,8 +422,7 @@ namespace task {
                 st->startIntervalFromForSec(interval_sec, offset_sec, duration_sec);
 
                 // compensate the time difference of main task and sub tasks
-                if (hasFixedSubTaskDuration())
-                    st->setTimeUsec64(us - getCurrentDurationSecSum() * 1000000);
+                if (hasFixedSubTaskDuration()) st->setTimeUsec64(us - getCurrentDurationSecSum() * 1000000);
 
                 st->enter();
                 return true;
@@ -491,8 +480,7 @@ namespace task {
             if (mode == SubTaskMode::SEQUENCE) {
                 if (hasFixedSubTaskDuration()) {
                     double d = 0.;
-                    for (size_t i = 0; i < subtask_index; ++i)
-                        d += subtasks[i]->getDurationSec();
+                    for (size_t i = 0; i < subtask_index; ++i) d += subtasks[i]->getDurationSec();
                     return d;
                 }
             }

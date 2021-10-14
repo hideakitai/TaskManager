@@ -9,8 +9,7 @@ namespace task {
 
     class TaskEmpty : public Base {
     public:
-        TaskEmpty(const String& name)
-        : Base(name) {}
+        TaskEmpty(const String& name) : Base(name) {}
         virtual ~TaskEmpty() {}
         virtual void update() override {}
     };
