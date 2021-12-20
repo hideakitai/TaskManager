@@ -47,6 +47,7 @@ namespace arduino {
 namespace task {
 
     using TaskList = Vec<Ref<Base>>;
+    using FuncWithTaskPtr = std::function<void(Base*)>;
 
     class Manager {
         Manager() {}
@@ -68,6 +69,18 @@ namespace task {
         Ref<TaskEmpty> add(const String& name, const Func& task) {
             Ref<TaskEmpty> t = std::make_shared<TaskEmpty>(name);
             t->onUpdate(task);
+            tasks.emplace_back(t);
+            t->begin_recursive();
+            return t;
+        }
+
+        Ref<TaskEmpty> add(const FuncWithTaskPtr& task) {
+            return add("", task);
+        }
+
+        Ref<TaskEmpty> add(const String& name, const FuncWithTaskPtr& task) {
+            Ref<TaskEmpty> t = std::make_shared<TaskEmpty>(name);
+            t->add_update_func(task);
             tasks.emplace_back(t);
             t->begin_recursive();
             return t;

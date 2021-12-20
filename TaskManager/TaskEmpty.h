@@ -8,10 +8,18 @@ namespace arduino {
 namespace task {
 
     class TaskEmpty : public Base {
+        std::function<void(Base*)> func;
+
     public:
         TaskEmpty(const String& name) : Base(name) {}
         virtual ~TaskEmpty() {}
-        virtual void update() override {}
+        virtual void update() override {
+            if (func) func(this);
+        }
+
+        void add_update_func(const std::function<void(Base*)> f) {
+            func = f;
+        }
     };
 
 }  // namespace task

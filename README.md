@@ -351,6 +351,8 @@ See [DebugLog](https://github.com/hideakitai/DebugLog) for details.
 ```C++
 Ref<TaskEmpty> add(const Func& task);
 Ref<TaskEmpty> add(const String& name, const Func& task);
+Ref<TaskEmpty> add(const FuncWithTaskPtr& task);
+Ref<TaskEmpty> add(const String& name, const FuncWithTaskPtr& task);
 template <typename TaskType> Ref<TaskType> add();
 template <typename TaskType> Ref<TaskType> add(const String& name);
 

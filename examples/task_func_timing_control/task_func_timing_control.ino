@@ -6,21 +6,21 @@ void setup() {
 
     // you should name your tasks to handle them
     // task framerate is 1 and repeat forever
-    Tasks.add("task1", [&] {
-             Serial.print("framerate task1: frame = ");
-             Serial.print(Tasks["task1"]->frame());
-             Serial.print(", time = ");
-             Serial.println(Tasks["task1"]->msec());
-         })
+    Tasks.add("task1", [&](Task::Base* this_task) {
+            Serial.print("framerate task1: frame = ");
+            Serial.print(this_task->frame());
+            Serial.print(", time = ");
+            Serial.println(this_task->msec());
+        })
         ->startFps(1);
 
     // task framerate is 2 and repeat forever
-    Tasks.add("task2", [&] {
-             Serial.print("framerate task2: frame = ");
-             Serial.print(Tasks["task2"]->frame());
-             Serial.print(", time = ");
-             Serial.println(Tasks["task2"]->msec());
-         })
+    Tasks.add("task2", [&](Task::Base* this_task) {
+            Serial.print("framerate task2: frame = ");
+            Serial.print(this_task->frame());
+            Serial.print(", time = ");
+            Serial.println(this_task->msec());
+        })
         ->startFps(1);
 
     Serial.print("task start: now = ");
