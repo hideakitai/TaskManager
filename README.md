@@ -326,6 +326,15 @@ void loop() {
 
 ```
 
+## Limitation for subtasks (only for NO-STL boards)
+
+For AVR boards (e.g. Uno, Leonard, Mega, etc.), the number of subtasks is limited to 4 by default. Please define `TASKMANAGER_MAX_SUBTASKS` as follows to change the number of subtasks.
+
+```C++
+#define TASKMANAGER_MAX_SUBTASKS 8  // define this before including TaskManager
+#include <TaskManager.h>
+```
+
 ## Other Options
 
 ### Enable Error Info

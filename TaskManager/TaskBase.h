@@ -5,6 +5,10 @@
 #include <Arduino.h>
 #include "util/PollingTimer/FrameRateCounter.h"
 
+#ifndef TASKMANAGER_MAX_SUBTASKS
+#define TASKMANAGER_MAX_SUBTASKS 4
+#endif // TASKMANAGER_MAX_SUBTASKS
+
 namespace arduino {
 namespace task {
 
@@ -16,12 +20,18 @@ namespace task {
     class Base : public FrameRateCounter {
         friend class Manager;
 
+#if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
+        using SubTasks = std::vector<Ref<Base>>;
+#else
+        using SubTasks = arx::vector<Ref<Base>, TASKMANAGER_MAX_SUBTASKS>;
+#endif
+
     protected:
         String name;
         bool b_auto_erase {false};
 
         // for SubTask
-        Vec<Ref<Base>> subtasks;
+        SubTasks subtasks;
         SubTaskMode mode {SubTaskMode::NA};
         size_t subtask_index {0};  // only for SubTaskMode::SEQUENCE
 
@@ -157,10 +167,10 @@ namespace task {
             return then<TaskEmpty>("", sec, [](Ref<TaskEmpty>) {});
         }
 
-        Vec<Ref<Base>>& getSubTasks() {
+        SubTasks& getSubTasks() {
             return subtasks;
         }
-        const Vec<Ref<Base>>& getSubTasks() const {
+        const SubTasks& getSubTasks() const {
             return subtasks;
         }
 
