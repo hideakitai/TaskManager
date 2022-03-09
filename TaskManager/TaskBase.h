@@ -26,7 +26,7 @@ namespace task {
         size_t subtask_index {0};  // only for SubTaskMode::SEQUENCE
 
     public:
-        Base(const String& name) : FrameRateCounter(), name(name) {};
+        Base(const String& name) : FrameRateCounter(), name(name) { subtasks.reserve(4); }
         Base(const Base&) = default;
         Base& operator=(const Base&) = default;
         Base(Base&&) = default;
@@ -100,6 +100,7 @@ namespace task {
             setSubTaskMode(SubTaskMode::PARALLEL);
             Ref<TaskType> t = std::make_shared<TaskType>(name);
             subtasks.emplace_back(t);
+            subtasks.shrink_to_fit();
             t->begin();
             setup(t);
             return this;
@@ -118,6 +119,7 @@ namespace task {
             setSubTaskMode(SubTaskMode::SYNC);
             Ref<TaskType> t = std::make_shared<TaskType>(name);
             subtasks.emplace_back(t);
+            subtasks.shrink_to_fit();
             t->begin();
             setup(t);
             return this;
@@ -144,6 +146,7 @@ namespace task {
             setSubTaskMode(SubTaskMode::SEQUENCE);
             Ref<TaskType> t = std::make_shared<TaskType>(name);
             subtasks.emplace_back(t);
+            subtasks.shrink_to_fit();
             t->setDurationSec(sec);
             t->begin();
             setup(t);

@@ -70,6 +70,7 @@ namespace task {
             Ref<TaskEmpty> t = std::make_shared<TaskEmpty>(name);
             t->onUpdate(task);
             tasks.emplace_back(t);
+            tasks.shrink_to_fit();
             t->begin_recursive();
             return t;
         }
@@ -82,6 +83,7 @@ namespace task {
             Ref<TaskEmpty> t = std::make_shared<TaskEmpty>(name);
             t->add_update_func(task);
             tasks.emplace_back(t);
+            tasks.shrink_to_fit();
             t->begin_recursive();
             return t;
         }
@@ -95,6 +97,7 @@ namespace task {
         Ref<TaskType> add(const String& name) {
             Ref<TaskType> t = std::make_shared<TaskType>(name);
             tasks.emplace_back(t);
+            tasks.shrink_to_fit();
             t->begin_recursive();
             return t;
         }
