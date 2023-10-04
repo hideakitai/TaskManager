@@ -14,5 +14,12 @@
     "version": "0.4.8",
     "license": "MIT",
     "frameworks": "arduino",
-    "platforms": "*"
+    "platforms": "*",
+    "dependencies":
+    {
+        "hideakitai/ArxContainer": "*",
+        "hideakitai/ArxSmartPtr": "*",
+        "hideakitai/DebugLog": "*",
+        "hideakitai/PollingTimer": "*"
+    }
 }
