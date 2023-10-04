@@ -3,7 +3,7 @@
 #define ARDUINO_TASK_MANAGER_TASK_BASE_H
 
 #include <Arduino.h>
-#include "util/PollingTimer/FrameRateCounter.h"
+#include <FrameRateCounter.h>
 
 #ifndef TASKMANAGER_MAX_SUBTASKS
 #define TASKMANAGER_MAX_SUBTASKS 4

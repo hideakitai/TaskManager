@@ -96,4 +96,8 @@ jobs:
             - examples
           libraries: |
             - source-path: ./
+            - name: ArxContainer
+            - name: ArxSmartPtr
+            - name: DebugLog
+            - name: PollingTimer
           verbose: true

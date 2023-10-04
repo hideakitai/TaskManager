@@ -4,15 +4,15 @@
 
 #include <Arduino.h>
 
-#include "TaskManager/util/ArxContainer/ArxContainer.h"
-#include "TaskManager/util/ArxSmartPtr/ArxSmartPtr.h"
+#include <ArxContainer.h>
+#include <ArxSmartPtr.h>
+#include <DebugLog.h>
 #include "TaskManager/util/TeensyDirtySTLErrorSolution/TeensyDirtySTLErrorSolution.h"
-#include "TaskManager/util/DebugLog/DebugLog.h"
 
 #ifdef TASKMANAGER_DEBUGLOG_ENABLE
-#include "TaskManager/util/DebugLog/DebugLogEnable.h"
+#include <DebugLogEnable.h>
 #else
-#include "TaskManager/util/DebugLog/DebugLogDisable.h"
+#include <DebugLogDisable.h>
 #endif
 
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
@@ -560,6 +560,6 @@ using TaskRef = Task::Ref<T>;
 using TaskBaseRef = TaskRef<Task::Base>;
 using SubTaskMode = Task::SubTaskMode;
 
-#include "TaskManager/util/DebugLog/DebugLogRestoreState.h"
+#include <DebugLogRestoreState.h>
 
 #endif  // ARDUINO_TASK_MANAGER_H
