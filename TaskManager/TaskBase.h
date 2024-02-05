@@ -23,7 +23,7 @@ namespace task {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
         using SubTasks = std::vector<Ref<Base>>;
 #else
-        using SubTasks = arx::vector<Ref<Base>, TASKMANAGER_MAX_SUBTASKS>;
+        using SubTasks = arx::stdx::vector<Ref<Base>, TASKMANAGER_MAX_SUBTASKS>;
 #endif
 
     protected:
