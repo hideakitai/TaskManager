@@ -30,11 +30,9 @@ namespace task {
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
     template <typename T>
     using Vec = std::vector<T>;
-    using namespace std;
 #else
     template <typename T>
-    using Vec = arx::vector<T>;
-    using namespace arx;
+    using Vec = arx::stdx::vector<T>;
 #endif
 
 }  // namespace task
